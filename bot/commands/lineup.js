@@ -75,6 +75,14 @@ export const LINEUP_COMMAND = {
                     option
                         .setName('slot13')
                         .setDescription('Player in slot 13'))
+                .addUserOption(option =>
+                    option
+                        .setName('slot14')
+                        .setDescription('Player in slot 14'))
+                .addUserOption(option =>
+                    option
+                        .setName('slot15')
+                        .setDescription('Player in slot 15'))
                 .addRoleOption(option =>
                     option
                         .setName('team')
@@ -155,7 +163,9 @@ async function submitLineup(interaction) {
             interaction.options.getMember('slot10'),
             interaction.options.getMember('slot11'),
             interaction.options.getMember('slot12'),
-            interaction.options.getMember('slot13')
+            interaction.options.getMember('slot13'),
+            interaction.options.getMember('slot14'),
+            interaction.options.getMember('slot15')
         ].filter(member => !!member);
 
         if (!userIsCaptain(interaction.member) && !userIsCoach(interaction.member) && !teamOption) {
@@ -366,7 +376,7 @@ async function substitutePlayer(interaction) {
         await channelMessage.edit(newChannelContent);
 
         await changeScheduledPlayer(matchup.schedule_message, replacedPlayer.discord_snowflake, newPlayer.discord_snowflake);
-        await changePredictionsPlayer(replacedPlayer.predictions_message, replacedPlayer.discord_snowflake, newPlayer.discord_snowflake);
+        await changePredictionsPlayer(replacedPlayer.predictions_message, replacedPlayer.name, newPlayer.name);
     }
 
     await baseHandler(interaction, dataCollector, verifier, onConfirm, false, false);
@@ -420,16 +430,15 @@ async function remindLineup(interaction) {
 
         const lineup = await loadOneLineup(currentSeason.number, week, interaction.user.id);
 
+        if (lineup.length === 0) {
+            return { failure: `No lineup found for ${weekName(week)} for ${interaction.member}.` };
+        }
+
         return { week, teamSnowflake: lineup[0].teamSnowflake, lineup };
     }
 
     function verifier(data) {
-        const { week, teamSnowflake, lineup } = data;
         let failures = [];
-
-        if (lineup.length === 0) {
-            failures.push(`No lineup found for ${weekName(week)} for ${roleMention(teamSnowflake)}.`);
-        }
 
         return failures;
     }

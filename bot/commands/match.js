@@ -1,10 +1,10 @@
 import { SlashCommandBuilder, roleMention, userMention, spoiler, italic, time, hyperlink, EmbedBuilder, channelMention } from 'discord.js';
-import { baseHandler, userIsMod } from './util.js';
+import { baseHandler, userIsMod, baseFunctionlessHandler } from './util.js';
 import { currentSeason, channels, mushiLeagueGuild } from '../globals.js';
-import { set, parse, isValid, sub, add } from 'date-fns';
+import { set, parse, isValid, sub, add, endOfWeek } from 'date-fns';
 import { savePredictions, updatePrediction, resetPredictionWinner } from '../features/predictions.js';
 import { setScheduledTime } from '../features/schedule.js';
-import { savePairingResult, loadOnePairing, loadOpenPairings } from '../../database/pairing.js';
+import { savePairingResult, loadOnePairing, loadOpenPairings, loadNextMatches } from '../../database/pairing.js';
 
 export const MATCH_COMMAND = {
     data: new SlashCommandBuilder()
@@ -67,6 +67,10 @@ export const MATCH_COMMAND = {
                         .setName('number')
                         .setDescription('which game in the set this is')
                         .setRequired(true))
+                .addUserOption(option =>
+                    option
+                        .setName('player')
+                        .setDescription('either player in the set, defaults to yourself'))
                 .addBooleanOption(option =>
                     option
                         .setName('extension')
@@ -144,7 +148,12 @@ export const MATCH_COMMAND = {
                 .addBooleanOption(option =>
                     option
                         .setName('extension')
-                        .setDescription('whether this is an extension from last week'))),
+                        .setDescription('whether this is an extension from last week')))
+
+        .addSubcommand(subcommand =>
+            subcommand
+                .setName('next')
+                .setDescription('shows next 10 upcoming matches')),
 
     async execute(interaction) {
         switch (interaction.options.getSubcommand()) {
@@ -169,13 +178,16 @@ export const MATCH_COMMAND = {
             case 'undo':
                 await undoReport(interaction);
                 break;
+            case 'next':
+                await nextMatches(interaction);
+                break;
         }
     }
 }
 
 async function scheduleMatch(interaction) {
     async function dataCollector(interaction) {
-        const date = interaction.options.getString('time');
+        let date = interaction.options.getString('time');
         const inexact = interaction.options.getBoolean('inexact');
         const timezone = interaction.options.getNumber('timezone');
         const player = interaction.options.getUser('player') || interaction.user;
@@ -188,26 +200,29 @@ async function scheduleMatch(interaction) {
             return { failure: `No pairing found for ${player}. Is this a Mushi League match?` };
         }
 
-        let dateString = date;
-
         if (!inexact) {
-            let localDate = parseDateInput(dateString);
+            date = parseDateInput(date);
 
-            if (!localDate) {
+            if (!date) {
                 return { failure: 'Couldn\'t parse the date. Please either specify that it\'s inexact, or pass it in formatted like "Sunday 4:00 PM", "Sunday 4 PM", or "Sunday 16:00"' };
             }
 
-            const botTimezone = localDate.getTimezoneOffset() / -60;
-            let botTime = sub(localDate, { hours: timezone - botTimezone });
+            const botTimezone = date.getTimezoneOffset() / -60;
+            date = sub(date, { hours: timezone - botTimezone });
 
-            if (botTime < Date.now()) {
-                botTime = add(botTime, { weeks: 1 });
+            const endOfGameWeek = endOfWeek(sub(Date.now(), { hours: -7 - botTimezone }), { weekStartsOn: 1 });
+            if (date > endOfGameWeek) {
+                date = sub(date, { weeks: 1 });
             }
 
-            dateString = time(botTime);
+            if (date < Date.now()) {
+                date = add(date, { weeks: 1 });
+            }
         }
 
-        return { playerSnowflake: player.id, dateString, timezone, inexact, pairing };
+        const dateString = inexact ? date : time(date);
+
+        return { playerSnowflake: player.id, date, dateString, timezone, inexact, pairing };
     }
 
     function verifier(data) {
@@ -226,7 +241,8 @@ async function scheduleMatch(interaction) {
     }
 
     async function onConfirm(data) {
-        await setScheduledTime(data.playerSnowflake, data.pairing.schedule_message, data.dateString);
+        const { playerSnowflake, date, dateString, pairing, inexact } = data;
+        await setScheduledTime(playerSnowflake, pairing.schedule_message, dateString, pairing.id, inexact ? undefined : date);
     }
 
     await baseHandler(interaction, dataCollector, verifier, onConfirm, false, false);
@@ -325,26 +341,24 @@ async function linkMatch(interaction) {
         const number = interaction.options.getNumber('number');
         const extension = interaction.options.getBoolean('extension');
         const week = extension ? currentSeason.current_week - 1 : currentSeason.current_week;
-        const player = interaction.member;
+        const player = interaction.options.getMember('player') || interaction.member;
         const ping = (number === 1);
         const pairing = await loadOnePairing(currentSeason.number, week, player.id);
-        const matchRoom = pairing
-            ? await channels.fetch(eval(`process.env.matchChannel${pairing.room}Id`))
-            : undefined;
+
+        if (!pairing) {
+            return { failure: 'this is not a league set' };
+		}
+
+        const matchRoom = await channels.fetch(eval(`process.env.matchChannel${pairing.room}Id`));
 
         return { gameLink, ping, number, player, pairing, matchRoom };
     }
 
     function verifier(data) {
-        const { player } = data;
         let failures = [], prompts = [];
 
-        if (!player.roles.cache.has(process.env.currentlyPlayingRoleId)) {
-            failures.push(`You're not barred from ${channelMention(process.env.liveMatchesChannelId)}! Link it yourself, you bum.`);
-        }
-
         const confirmLabel = 'Confirm Link Game';
-        const confirmMessage = `Game linked in ${channelMention(process.env.liveMatchesChannelId)}`;
+        const confirmMessage = `Game linked in ${channelMention(process.env.matchLinksChannelId)}`;
         const cancelMessage = 'Game not linked';
 
         return [failures, prompts, confirmLabel, confirmMessage, cancelMessage];
@@ -359,8 +373,8 @@ async function linkMatch(interaction) {
         const linkMessage = `${gameLink} ${leftPlayerText} vs ${rightPlayerText} game ${number}`;
         const linkMessageWithPing = linkMessage + ` ${roleMention(process.env.spectatorRoleId)}`;
 
-        const liveMatchesChannel = await channels.fetch(process.env.liveMatchesChannelId);
-        await liveMatchesChannel.send({
+        const matchLinksChannel = await channels.fetch(process.env.matchLinksChannelId);
+        await matchLinksChannel.send({
             content: ping ? linkMessageWithPing : linkMessage,
             allowedMentions: { roles: [process.env.spectatorRoleId] }
         });
@@ -564,8 +578,8 @@ async function postReport(pairing, winnerOnLeft, extension, games, act, dead) {
 }
 
 function makeReportPlaintext(pairing, winnerOnLeft, extension, act, dead) {
-    const leftPlayerText = `(${roleMention(pairing.leftTeamSnowflake)}) ${userMention(pairing.leftPlayerSnowflake)}`;
-    const rightPlayerText = `${userMention(pairing.rightPlayerSnowflake)} (${roleMention(pairing.rightTeamSnowflake)})`;
+    const leftPlayerText = `(${roleMention(pairing.leftTeamSnowflake)}) ${pairing.leftPlayerName}`;
+    const rightPlayerText = `${pairing.rightPlayerName} (${roleMention(pairing.rightTeamSnowflake)})`;
     const extensionMessage = extension ? italic('\n(Extension from last week)') : '';
 
     if (act) {
@@ -585,8 +599,8 @@ function makeReplayEmbed(pairing, winnerOnLeft, extension, games) {
         gameFields.push({ name: `game ${i + 1}`, value: hyperlink('link', games.at(i) || 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'), inline: true });
     }
 
-    const leftPlayerText = `(${roleMention(pairing.leftTeamSnowflake)}) ${userMention(pairing.leftPlayerSnowflake)}`;
-    const rightPlayerText = `${userMention(pairing.rightPlayerSnowflake)} (${roleMention(pairing.rightTeamSnowflake)})`;
+    const leftPlayerText = `(${roleMention(pairing.leftTeamSnowflake)}) ${pairing.leftPlayerName}`;
+    const rightPlayerText = `${pairing.rightPlayerName} (${roleMention(pairing.rightTeamSnowflake)})`;
     const winnerText = games.length === 2
         ? winnerOnLeft ? '\u{0032}\u{FE0F}\u{20E3} > \u{0030}\u{FE0F}\u{20E3}' : '\u{0030}\u{FE0F}\u{20E3} < \u{0032}\u{FE0F}\u{20E3}'
         : winnerOnLeft ? '\u{0032}\u{FE0F}\u{20E3} > \u{0031}\u{FE0F}\u{20E3}' : '\u{0031}\u{FE0F}\u{20E3} < \u{0032}\u{FE0F}\u{20E3}';
@@ -647,7 +661,7 @@ async function undoReport(interaction) {
         await savePairingResult(pairing.id, null, null, null, null, null, null, null);
 
         await resetPredictionWinner(pairing.predictions_message, pairing.matchupPrediction, pairing.winner === pairing.leftPlayerId,
-            pairing.dead, pairing.leftPlayerSnowflake, pairing.rightPlayerSnowflake);
+            pairing.dead, pairing.leftPlayerName, pairing.rightPlayerName);
         await setScheduledTime(pairing.leftPlayerSnowflake, pairing.schedule_message, '');
     }
 
@@ -662,4 +676,30 @@ async function notifyOwnersIfAllMatchesDone(week) {
             allowedMentions: { parse: ['roles'] }
         })
     }
+}
+
+async function nextMatches(interaction) {
+    async function dataCollector(interaction) {
+        const upcomingMatches = await loadNextMatches();
+
+        return { upcomingMatches };
+    }
+
+    function verifier(data) {
+
+    }
+
+    function responseWriter(data) {
+        const { upcomingMatches } = data;
+        
+        if (upcomingMatches.length === 0) {
+            return 'No upcoming matches.';
+        }
+
+        return 'Next 10 upcoming matches:\n\n'.concat(upcomingMatches.map(match =>
+            `${time(new Date(match.scheduled_datetime))}: ${roleMention(match.leftTeamSnowflake)} ${match.leftPlayerName} vs ${match.rightPlayerName} ${roleMention(match.rightTeamSnowflake)}`
+        ).join('\n'));
+    }
+
+    await baseFunctionlessHandler(interaction, dataCollector, verifier, responseWriter, true);
 }

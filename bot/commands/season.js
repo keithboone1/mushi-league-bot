@@ -12,9 +12,9 @@ import { postScheduling } from '../features/schedule.js';
 import { saveNewSeason, saveAdvanceWeek } from '../../database/season.js';
 import { saveNewWeeks } from '../../database/week.js';
 import { saveMatchRoomMessageId, saveOneNewMatchup, loadAllMatchups, loadMatchupsMissingLineups, loadOldPairingMessage } from '../../database/matchup.js';
-import { saveInitialStandings, loadStandingWeeksSoFar, loadStandings, saveStandingsUpdate } from '../../database/standing.js';
+import { saveInitialStandings, loadStandingWeeksSoFar, loadStandings, saveStandingsUpdate, loadTopTeams } from '../../database/standing.js';
 import { loadTeams, loadActiveTeams, loadTeam } from '../../database/team.js';
-import { saveDropAllPlayers, saveStarPointsToRatings, loadAllPlayersOnTeam, loadPlayerFromSnowflake, loadPlayersOnTeamInStarOrder } from '../../database/player.js';
+import { saveDropAllPlayers, saveStarPointsToRatings, loadAllPlayersOnTeam, loadPlayerFromSnowflake, loadPlayersOnTeamInStarOrder, loadAllActivePlayers } from '../../database/player.js';
 import { loadAllPairings, loadAllPairingResults, loadOpenPairings } from '../../database/pairing.js';
 import { savePlayerStatUpdate } from '../../database/pstat.js';
 
@@ -83,7 +83,7 @@ async function newSeason(interaction) {
 
     async function onConfirm(data) {
         const { length, playoffSize } = data;
-        await saveDropAllPlayers();
+        await dropAllPlayers();
         await saveStarPointsToRatings(currentSeason.number);
         await makeSeasonAndWeeks(currentSeason.number + 1, length, playoffSize);
         await makeRegSeasonPairings(currentSeason.number + 1, length);
@@ -93,6 +93,27 @@ async function newSeason(interaction) {
     }
 
     await baseHandler(interaction, dataCollector, verifier, onConfirm, false, false);
+}
+
+async function dropAllPlayers() {
+    const allRemovableRoles = new Set([
+        ...(await loadActiveTeams()).map(x => x.discord_snowflake),
+        process.env.captainRoleId,
+        process.env.coachRoleId,
+        process.env.playerRoleId
+    ]);
+    const allActivePlayers = await loadAllActivePlayers();
+    for (const player of allActivePlayers) {
+        try {
+            const discordPlayer = await mushiLeagueGuild.members.fetch(player.discord_snowflake);
+            const rolesToRemove = [...discordPlayer.roles.cache.keys()].filter(snowflake => allRemovableRoles.has(snowflake));
+            discordPlayer.roles.remove(rolesToRemove);
+        }
+        catch (e) {
+            // pass
+		}
+	}
+    await saveDropAllPlayers();
 }
 
 async function makeSeasonAndWeeks(season, length, playoffSize) {
@@ -170,10 +191,13 @@ async function calculateStandings(interaction) {
 
         const pairings = await loadAllPairingResults(currentSeason.number, nextStandingsWeek);
         let teamWins = {};
+        for (const team of await loadActiveTeams()) {
+            teamWins[team.id] = 0;
+		}
 
         for (const pairing of pairings) {
             if (!pairing.dead) {
-                teamWins[pairing.winningTeam] = (teamWins[pairing.winningTeam] || 0) + 1;
+                teamWins[pairing.winningTeam] = teamWins[pairing.winningTeam] + 1;
             }
 
             await savePlayerStatUpdate(currentSeason.number, pairing);
@@ -185,7 +209,7 @@ async function calculateStandings(interaction) {
             await postStandings(nextStandingsWeek, standings);
 
             if (nextStandingsWeek === currentSeason.regular_weeks) {
-                await setUpPlayoff();
+                await setUpPlayoff(standings, teamWins.size);
             }
         }
         else {
@@ -227,21 +251,26 @@ function prettyTextStanding(rank, standing) {
     return `${rightAlign(6, rank)}|${rightAlign(8, standing.points)}|${rightAlign(6, standing.battle_differential)}|${rightAlign(3, standing.wins)}|${rightAlign(3, standing.losses)}|${rightAlign(3, standing.ties)}| ${standing.teamName}`;
 }
 
-async function setUpPlayoff() {
+async function setUpPlayoff(standings, numberOfTeams) {
     // I'm sure there's an algorithm but I do not feel like figuring it out right now
     if (currentSeason.playoff_size === 4) {
         await saveOneNewMatchup('sf1', standings[0].teamId, standings[3].teamId, currentSeason.number, currentSeason.current_week + 1);
         await saveOneNewMatchup('sf2', standings[1].teamId, standings[2].teamId, currentSeason.number, currentSeason.current_week + 1);
     }
 
-    await hideAllRegularRooms();
+    if (currentSeason.playoff_size === 6) {
+        await saveOneNewMatchup('sf1', standings[2].teamId, standings[5].teamId, currentSeason.number, currentSeason.current_week + 1);
+        await saveOneNewMatchup('sf2', standings[3].teamId, standings[4].teamId, currentSeason.number, currentSeason.current_week + 1);
+	}
+
+    await hideAllRegularRooms(numberOfTeams);
     await announceNextPlayoffRound();
 }
 
-async function hideAllRegularRooms() {
+async function hideAllRegularRooms(numberOfTeams) {
     const allTeamSnowflakes = (await loadTeams()).map(team => team.discord_snowflake);
 
-    for (let i = 1; i < 6; i++) {
+    for (let i = 1; i <= numberOfTeams / 2; i++) {
         const matchRoom = await channels.fetch(eval(`process.env.matchChannel${i}Id`));
 
         const permissionOverwrites = matchRoom.permissionOverwrites.cache
@@ -266,14 +295,23 @@ async function advancePlayoffWinners(teamWins) {
         }
     });
 
-    if (winners.length === 1) {
+    if (weekName(currentSeason.current_week) === 'Finals') {
         await declareWinner(winners[0]);
+	}
+    if (weekName(currentSeason.current_week) === 'Semifinals') {
+        if (currentSeason.playoff_size === 4 || currentSeason.playoff_size === 6) {
+            await saveOneNewMatchup('finals', winners[0], winners[1], currentSeason.number, currentSeason.current_week + 1);
+            await announceNextPlayoffRound();
+		}
     }
-    // again, i'm sure there's an algorithm, but I don't feel like figuring it out right now.
-    else if (winners.length === 2) {
-        await saveOneNewMatchup('finals', winners[0], winners[1], currentSeason.number, currentSeason.current_week + 1);
-        announceNextPlayoffRound();
-    }
+    if (weekName(currentSeason.current_week) === 'Quarterfinals') {
+        if (currentSeason.playoff_size === 6) {
+            const byeTeams = await loadTopTeams(currentSeason.number, 2);
+            await saveOneNewMatchup('sf1', byeTeams[0].teamId, winners[1], currentSeason.number, currentSeason.current_week + 1);
+            await saveOneNewMatchup('sf2', byeTeams[1].teamId, winners[0], currentSeason.number, currentSeason.current_week + 1);
+            await announceNextPlayoffRound();
+		}
+	}
 }
 
 async function announceNextPlayoffRound() {
@@ -309,12 +347,12 @@ async function announceWinner(winner) {
 
 async function makeWinnerRole(winningTeamId, winningTeamSnowflake) {
     const color = (await mushiLeagueGuild.roles.fetch(winningTeamSnowflake)).hexColor;
-    const lastWinnerPosition = (await mushiLeagueGuild.roles.cache.find(r => r.name === `Season ${currentSeason.number - 1} Winner`)).position;
+    const lastWinnerPosition = (await mushiLeagueGuild.roles.cache.find(r => r.name === `Season ${currentSeason.number - 1} Winner`))?.position;
 
     const winnerRole = await mushiLeagueGuild.roles.create({
         name: `Season ${currentSeason.number} Winner`,
         color: color,
-        position: lastWinnerPosition + 1,
+        position: lastWinnerPosition ?? 0 + 1,
     });
 
     const players = (await loadAllPlayersOnTeam(winningTeamId)).map(player => player.discord_snowflake);
@@ -379,7 +417,9 @@ async function updateMatchReportsHeader() {
     const matchReportChannel = await channels.fetch(process.env.matchReportChannelId);
 
     const oldHeader = (await matchReportChannel.messages.fetchPinned()).values().next().value;
-    await matchReportChannel.messages.unpin(oldHeader.id);
+    if (oldHeader) {
+        await matchReportChannel.messages.unpin(oldHeader.id);
+	}
 
     const weekHeader = await matchReportChannel.send(bold(`----- ${weekName(currentSeason.current_week)} games -----`));
     await matchReportChannel.messages.pin(weekHeader.id);
