@@ -1,3 +1,4 @@
+import { twMerge } from "tailwind-merge";
 import type { Route } from "./+types/schedule";
 
 export default function Schedule({ loaderData }: Route.ComponentProps) {
@@ -8,9 +9,9 @@ export default function Schedule({ loaderData }: Route.ComponentProps) {
           {week.map((matchup) => {
             const { leftWins, rightWins } = matchup.pairings.reduce(
               (accum, item) => {
-                if (item.leftPlayer.winner) {
+                if (item.leftPlayer.won) {
                   accum.leftWins += 1;
-                } else if (item.rightPlayer.winner) {
+                } else if (item.rightPlayer.won) {
                   accum.rightWins += 1;
                 }
                 return accum;
@@ -67,15 +68,27 @@ export default function Schedule({ loaderData }: Route.ComponentProps) {
                     }
                     return (
                       <tr>
-                        <td className="text-right border pr-2">
+                        <td
+                          className={twMerge(
+                            "text-right border pr-2",
+                            p.leftPlayer.won && "bg-green-100",
+                            p.leftPlayer.lost && "bg-red-100",
+                            p.dead && "bg-gray-200"
+                          )}
+                        >
                           {p.leftPlayer.name}
                         </td>
                         <td className="border-t">
-                          <div className="flex items-center">
-                            {gameLinks}
-                          </div>
+                          <div className="flex items-center">{gameLinks}</div>
                         </td>
-                        <td className="text-left border pl-2">
+                        <td
+                          className={twMerge(
+                            "text-right border pr-2",
+                            p.rightPlayer.won && "bg-green-100",
+                            p.rightPlayer.lost && "bg-red-100",
+                            p.dead && "bg-gray-200"
+                          )}
+                        >
                           {p.rightPlayer.name}
                         </td>
                       </tr>
@@ -118,7 +131,8 @@ type ScheduleQuery = {
 type PlayerData = {
   id: number;
   name: string;
-  winner: boolean;
+  won: boolean;
+  lost: boolean;
 };
 
 type PairingData = {
@@ -149,7 +163,7 @@ type ScheduleData = {
 
 export async function loader({ params: { season } }: Route.LoaderArgs) {
   const rawData = (await (
-    await fetch(`https://mushileague.gg/api/season/${season}/schedule`)
+    await fetch(`http://localhost:3001/api/season/${season}/schedule`)
   ).json()) as ScheduleQuery;
 
   const regularWeeks = rawData[0].regular_weeks;
@@ -194,12 +208,14 @@ export async function loader({ params: { season } }: Route.LoaderArgs) {
       leftPlayer: {
         name: item.leftPlayerName,
         id: item.leftPlayerId,
-        winner: item.winner === item.leftPlayerId,
+        won: item.winner === item.leftPlayerId,
+        lost: item.winner === item.rightPlayerId,
       },
       rightPlayer: {
         name: item.rightPlayerName,
         id: item.rightPlayerId,
-        winner: item.winner === item.rightPlayerId,
+        won: item.winner === item.rightPlayerId,
+        lost: item.winner === item.leftPlayerId,
       },
       dead: item.dead === 1,
       games: [
