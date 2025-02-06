@@ -99,6 +99,6 @@ export default function Season({
 
 export async function loader({ params: { season } }: Route.LoaderArgs) {
   return (await (
-    await fetch(`http://localhost:3001/api/season/${season}`)
+    await fetch(`https://mushileague.gg/api/season/${season}`)
   ).json()) as TeamQuery;
 }
