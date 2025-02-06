@@ -35,7 +35,7 @@ export default function Welcome({ loaderData }: Route.ComponentProps) {
 
 export async function loader() {
   const rawData = (await (
-    await fetch("http://localhost:3001/api/seasons")
+    await fetch("https://mushileague.gg/api/seasons")
   ).json()) as SeasonsQuery;
 
   const lastNumber = rawData[0].number;
