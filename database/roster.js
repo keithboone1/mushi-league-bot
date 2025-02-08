@@ -11,7 +11,7 @@ export async function loadAllTeams(season) {
     "SELECT DISTINCT team.id, team.name, team.color FROM roster \
      INNER JOIN team ON team.id = roster.team \
      WHERE roster.season = ? \
-     ORDER BY team.name DESC";
+     ORDER BY team.name ASC";
 
   return await db.all(query, season);
 }
