@@ -22,10 +22,7 @@ export default function Schedule({ loaderData }: Route.ComponentProps) {
             const scoreString = `${leftWins} - ${rightWins}`;
 
             return (
-              <table
-                key={matchup.id}
-                className="w-3xl border-collapse border table-fixed"
-              >
+              <table key={matchup.id} className="w-3xl border-collapse border table-fixed">
                 <thead>
                   <tr className="h-8">
                     <th
@@ -48,26 +45,28 @@ export default function Schedule({ loaderData }: Route.ComponentProps) {
                 <tbody>
                   {matchup.pairings.map((p) => {
                     const gameLinks = p.dead
-                      ? [<span className="basis-full text-center">dead</span>]
+                      ? [<span key={0} className="basis-full text-center">dead</span>]
+                      : p.games.length === 0
+                      ? [<span key={0} className="basis-full text-center">act</span>]
                       : p.games.map((game, i) =>
                           game.startsWith("http") ? (
-                            <div className="basis-full flex px-2 not-last:border-r">
+                            <div key={i} className="basis-full flex px-2 not-last:border-r">
                               <a
                                 className="basis-full grow text-center underline text-sm text-[blue] active:text-[purple]"
                                 href={game}
                               >{`g${i + 1}`}</a>
                             </div>
                           ) : (
-                            <span className="basis-full not-last:border-r text-center">
+                            <span key={i} className="basis-full not-last:border-r text-center">
                               {game}
                             </span>
                           )
                         );
-                    while (!p.dead && gameLinks.length < 3) {
-                      gameLinks.push(<span className="basis-full px-2" />);
+                    while (p.games.length > 0 && gameLinks.length < 3) {
+                      gameLinks.push(<span key={2} className="basis-full px-2" />);
                     }
                     return (
-                      <tr>
+                      <tr key={p.leftPlayer.id}>
                         <td
                           className={twMerge(
                             "text-right border pr-2",
@@ -83,7 +82,7 @@ export default function Schedule({ loaderData }: Route.ComponentProps) {
                         </td>
                         <td
                           className={twMerge(
-                            "text-right border pr-2",
+                            "text-left border pr-2",
                             p.rightPlayer.won && "bg-green-100",
                             p.rightPlayer.lost && "bg-red-100",
                             p.dead && "bg-gray-200"
@@ -163,7 +162,7 @@ type ScheduleData = {
 
 export async function loader({ params: { season } }: Route.LoaderArgs) {
   const rawData = (await (
-    await fetch(`http://localhost:3001/api/season/${season}/schedule`)
+    await fetch(`https://mushileague.gg/api/season/${season}/schedule`)
   ).json()) as ScheduleQuery;
 
   const regularWeeks = rawData[0].regular_weeks;

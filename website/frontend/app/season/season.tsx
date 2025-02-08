@@ -2,6 +2,7 @@ import { NavLink, Outlet, useLocation } from "react-router";
 import { twMerge } from "tailwind-merge";
 import { ArrowLeft } from "lucide-react";
 import type { Route } from "./+types/season";
+import { teamInitials } from "~/util/util";
 
 type TeamQuery = {
   id: number;
@@ -15,15 +16,9 @@ export default function Season({
 }: Route.ComponentProps) {
   const { pathname } = useLocation();
 
-  const teamInitials = (name: string) =>
-    name
-      .split(/[^a-zA-Z]/)
-      .map((word) => word.charAt(0))
-      .join("");
-
   return (
     <>
-      <NavLink to="/" className="flex gap-1 items-center">
+      <NavLink to="/" className="inline-flex gap-1 items-center">
         <ArrowLeft size={16} />
         Return to home
       </NavLink>
@@ -99,6 +94,6 @@ export default function Season({
 
 export async function loader({ params: { season } }: Route.LoaderArgs) {
   return (await (
-    await fetch(`http://localhost:3001/api/season/${season}`)
+    await fetch(`https://mushileague.gg/api/season/${season}`)
   ).json()) as TeamQuery;
 }
