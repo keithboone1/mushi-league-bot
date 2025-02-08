@@ -63,7 +63,7 @@ type DraftQuery = {
 
 export async function loader({ params: { season } }: Route.LoaderArgs) {
   const rawData = (await (
-    await fetch(`http://localhost:3001/api/season/${season}/draft`)
+    await fetch(`https://mushileague.gg/api/season/${season}/draft`)
   ).json()) as DraftQuery;
 
   const maxRoundLength = rawData.reduce(
