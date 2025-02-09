@@ -4,6 +4,8 @@ import type { Route } from "./+types/team";
 export default function Team({ loaderData }: Route.ComponentProps) {
   const leadershipTeam = loaderData.players.filter((p) => p.role !== "Player");
 
+  const playingMembers = loaderData.players.filter((p) => p.role !== "Coach");
+
   return (
     <>
       <h2>{loaderData.name}</h2>
@@ -27,7 +29,7 @@ export default function Team({ loaderData }: Route.ComponentProps) {
           </tr>
         </thead>
         <tbody>
-          {loaderData.players.map((player) => (
+          {playingMembers.map((player) => (
             <tr key={player.id}>
               <td
                 className={twMerge(

@@ -12,12 +12,6 @@ export async function loadPlayerStats(season) {
   return await db.all(query, season);
 }
 
-export async function saveInitialPstats(season) {
-  const query =
-    "INSERT INTO pstat (player, season, stars) SELECT id, ?, stars FROM player WHERE team IS NOT NULL AND role != 3";
-  await db.run(query, season);
-}
-
 export async function savePlayerStatUpdate(season, pairing) {
   if (pairing.dead) {
     await db.run(
