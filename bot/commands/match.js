@@ -68,34 +68,6 @@ export const MATCH_COMMAND = {
     )
     .addSubcommand((subcommand) =>
       subcommand
-        .setName("start")
-        .setDescription(
-          `when players have begun their bo3 (locks them out of ${channelMention(
-            process.env.liveMatchesChannelId
-          )} until /match report)`
-        )
-        .addUserOption((option) =>
-          option
-            .setName("player")
-            .setDescription(
-              "name of either player in the bo3, defaults to yourself"
-            )
-        )
-        .addUserOption((option) =>
-          option
-            .setName("opponent")
-            .setDescription(
-              "name of the other player in the bo3, can default in mushi league opps"
-            )
-        )
-        .addBooleanOption((option) =>
-          option
-            .setName("extension")
-            .setDescription("whether this is an extension match")
-        )
-    )
-    .addSubcommand((subcommand) =>
-      subcommand
         .setName("link")
         .setDescription(
           `links a game in ${channelMention(process.env.liveMatchesChannelId)}`
