@@ -32,7 +32,7 @@ export async function savePlayerChange(
   active,
   season
 ) {
-  let updatePlayerQuery = `UPDATE player SET name = ${name}, stars = ${stars}, team = ${team}, role = ${role}, active = ${active} WHERE id = ${id};`;
+  let updatePlayerQuery = `UPDATE player SET name = '${name}', stars = ${stars}, team = ${team}, role = ${role}, active = ${active} WHERE id = ${id};`;
   if (team !== null) {
     updatePlayerQuery += `INSERT INTO pstat (player, season, stars) VALUES (${id}, ${season}, ${stars}) ON CONFLICT DO UPDATE SET stars = ${stars}; \
      INSERT INTO roster (season, player, team, role) VALUES (${season}, ${id}, ${team}, ${role}) ON CONFLICT DO UPDATE SET team = ${team}, role = ${role};`;
