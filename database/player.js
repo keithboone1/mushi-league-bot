@@ -104,7 +104,7 @@ export async function loadPlayersOnTeamInStarOrder(teamId) {
 export async function loadRosterSize(teamId, captainOnly) {
   if (captainOnly) {
     return await db.get(
-      "SELECT COUNT(stars) AS size, SUM(stars) AS stars FROM player WHERE team = ? AND role = 2",
+      "SELECT 1 AS size, stars FROM player WHERE team = ? AND role = 2 ORDER BY stars DESC LIMIT 1",
       teamId
     );
   } else
