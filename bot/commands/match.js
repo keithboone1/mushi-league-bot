@@ -520,7 +520,7 @@ async function reportMatch(interaction) {
       );
     }
 
-    if (games.some((game) => game.search("battle"))) {
+    if (games.some((game) => game.search("battle") !== -1)) {
       failures.push(
         "You seem to have given live game links instead of replay links."
       );
