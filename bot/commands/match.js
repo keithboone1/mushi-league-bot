@@ -378,7 +378,6 @@ async function linkMatch(interaction) {
       opponent,
       pairing,
       matchRoom,
-      opponent,
       eitherPlayerIsOwner,
       start,
     };
@@ -521,7 +520,7 @@ async function reportMatch(interaction) {
       );
     }
 
-    if (games.any((game) => game.search("battle") !== -1)) {
+    if (games.some((game) => game.search("battle") !== -1)) {
       failures.push(
         "You seem to have given live game links instead of replay links."
       );
