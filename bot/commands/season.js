@@ -545,8 +545,12 @@ async function setUpPlayoffRoom(pairingSet, matchRoom, allTeamSnowflakes) {
 }
 
 async function unpinOldPairingMessage(room, matchRoom) {
-    const oldPairingMessageId = (await loadOldPairingMessage(room)).channel_message;
-    await matchRoom.messages.unpin(oldPairingMessageId);
+    try {
+        const oldPairingMessageId = (await loadOldPairingMessage(room)).channel_message;
+        await matchRoom.messages.unpin(oldPairingMessageId);
+    } catch (error) {
+        console.log('No pinned message found, continuing.');
+    }
 }
 
 async function postPairingMessage(pairingSet, matchRoom) {
