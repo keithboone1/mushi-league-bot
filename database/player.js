@@ -32,7 +32,7 @@ export async function savePlayerChange(
   active,
   season
 ) {
-  let updatePlayerQuery = `UPDATE player SET name = ${name}, stars = ${stars}, team = ${team}, role = ${role}, active = ${active} WHERE id = ${id};`;
+  let updatePlayerQuery = `UPDATE player SET name = '${name}', stars = ${stars}, team = ${team}, role = ${role}, active = ${active} WHERE id = ${id};`;
   if (team !== null) {
     updatePlayerQuery += `INSERT INTO pstat (player, season, stars) VALUES (${id}, ${season}, ${stars}) ON CONFLICT DO UPDATE SET stars = ${stars}; \
      INSERT INTO roster (season, player, team, role) VALUES (${season}, ${id}, ${team}, ${role}) ON CONFLICT DO UPDATE SET team = ${team}, role = ${role};`;
@@ -104,7 +104,7 @@ export async function loadPlayersOnTeamInStarOrder(teamId) {
 export async function loadRosterSize(teamId, captainOnly) {
   if (captainOnly) {
     return await db.get(
-      "SELECT COUNT(stars) AS size, SUM(stars) AS stars FROM player WHERE team = ? AND role = 2",
+      "SELECT 1 AS size, stars FROM player WHERE team = ? AND role = 2 ORDER BY stars DESC LIMIT 1",
       teamId
     );
   } else
