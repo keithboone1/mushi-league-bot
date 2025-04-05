@@ -1,4 +1,6 @@
+import { twJoin } from "tailwind-merge";
 import type { Route } from "./+types/standings";
+import { teamColorText } from "~/util/util";
 
 export default function Standings({ loaderData }: Route.ComponentProps) {
   return (
@@ -18,7 +20,15 @@ export default function Standings({ loaderData }: Route.ComponentProps) {
           {loaderData.map((team, i) => (
             <tr key={team.id}>
               <td className="px-2 text-center">{i + 1}</td>
-              <td className="px-2 py-0.5 font-semibold" style={{ backgroundColor: team.color }}>{team.name}</td>
+              <td
+                className={twJoin(
+                  "px-2 py-0.5 font-semibold",
+                  teamColorText(team.color)
+                )}
+                style={{ backgroundColor: team.color }}
+              >
+                {team.name}
+              </td>
               <td className="px-2 text-center">{team.points}</td>
               <td className="px-2 text-center">{`${team.wins} - ${team.losses} - ${team.ties}`}</td>
               <td className="px-2 text-center">{team.battle_differential}</td>

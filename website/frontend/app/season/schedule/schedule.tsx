@@ -1,9 +1,8 @@
-import { twMerge } from "tailwind-merge";
+import { twJoin, twMerge } from "tailwind-merge";
 import type { Route } from "./+types/schedule";
+import { teamColorText } from "~/util/util";
 
 export default function Schedule({ loaderData }: Route.ComponentProps) {
-  console.log(loaderData);
-
   return (
     <div className="flex flex-col gap-3">
       {loaderData.weeks.map((week, i) => (
@@ -24,11 +23,17 @@ export default function Schedule({ loaderData }: Route.ComponentProps) {
             const scoreString = `${leftWins} - ${rightWins}`;
 
             return (
-              <table key={matchup.id} className="w-3xl border-collapse border table-fixed">
+              <table
+                key={matchup.id}
+                className="w-3xl border-collapse border table-fixed"
+              >
                 <thead>
                   <tr className="h-8">
                     <th
-                      className="text-lg font-semibold whitespace-nowrap text-center border"
+                      className={twJoin(
+                        "text-lg font-semibold whitespace-nowrap text-center border border-black",
+                        teamColorText(matchup.leftTeam.color)
+                      )}
                       style={{ backgroundColor: matchup.leftTeam.color }}
                     >
                       {matchup.leftTeam.name}
@@ -37,7 +42,10 @@ export default function Schedule({ loaderData }: Route.ComponentProps) {
                       {scoreString}
                     </th>
                     <th
-                      className="text-lg font-semibold whitespace-nowrap text-center border"
+                      className={twJoin(
+                        "text-lg font-semibold whitespace-nowrap text-center border border-black",
+                        teamColorText(matchup.rightTeam.color)
+                      )}
                       style={{ backgroundColor: matchup.rightTeam.color }}
                     >
                       {matchup.rightTeam.name}
@@ -47,25 +55,41 @@ export default function Schedule({ loaderData }: Route.ComponentProps) {
                 <tbody>
                   {matchup.pairings.map((p) => {
                     const gameLinks = p.dead
-                      ? [<span key={0} className="basis-full text-center">dead</span>]
+                      ? [
+                          <span key={0} className="basis-full text-center">
+                            dead
+                          </span>,
+                        ]
                       : p.games.length === 0
-                      ? [<span key={0} className="basis-full text-center">act</span>]
+                      ? [
+                          <span key={0} className="basis-full text-center">
+                            act
+                          </span>,
+                        ]
                       : p.games.map((game, i) =>
                           game.startsWith("http") ? (
-                            <div key={i} className="basis-full flex px-2 not-last:border-r">
+                            <div
+                              key={i}
+                              className="basis-full flex px-2 not-last:border-r"
+                            >
                               <a
                                 className="basis-full grow text-center underline text-sm text-[blue] active:text-[purple]"
                                 href={game}
                               >{`g${i + 1}`}</a>
                             </div>
                           ) : (
-                            <span key={i} className="basis-full not-last:border-r text-center">
+                            <span
+                              key={i}
+                              className="basis-full not-last:border-r text-center"
+                            >
                               {game}
                             </span>
                           )
                         );
                     while (p.games.length > 0 && gameLinks.length < 3) {
-                      gameLinks.push(<span key={2} className="basis-full px-2" />);
+                      gameLinks.push(
+                        <span key={2} className="basis-full px-2" />
+                      );
                     }
                     return (
                       <tr key={p.leftPlayer.id}>
@@ -178,6 +202,11 @@ export async function loader({ params: { season } }: Route.LoaderArgs) {
   };
 
   return rawData.reduce((accum, item) => {
+    // canary value for the week existing
+    if (!item.leftTeamName) {
+      return accum;
+    }
+
     let week = accum.weeks.at(item.weekNumber - 1);
 
     if (week === undefined) {
@@ -205,31 +234,33 @@ export async function loader({ params: { season } }: Route.LoaderArgs) {
       accum.weeks[item.weekNumber - 1].push(matchup);
     }
 
-    // canary value for the week existing
-    if (item.leftPlayerName) {
-      matchup.pairings.push({
-        leftPlayer: {
-          name: item.leftPlayerName,
-          id: item.leftPlayerId,
-          won: item.winner === item.leftPlayerId,
-          lost: item.winner === item.rightPlayerId,
-        },
-        rightPlayer: {
-          name: item.rightPlayerName,
-          id: item.rightPlayerId,
-          won: item.winner === item.rightPlayerId,
-          lost: item.winner === item.leftPlayerId,
-        },
-        dead: item.dead === 1,
-        games: [
-          item.game1,
-          item.game2,
-          item.game3,
-          item.game4,
-          item.game5,
-        ].filter(Boolean),
-      });
+    // canary value for the pairings existing
+    if (!item.leftPlayerName) {
+      return accum;
     }
+
+    matchup.pairings.push({
+      leftPlayer: {
+        name: item.leftPlayerName,
+        id: item.leftPlayerId,
+        won: item.winner === item.leftPlayerId,
+        lost: item.winner === item.rightPlayerId,
+      },
+      rightPlayer: {
+        name: item.rightPlayerName,
+        id: item.rightPlayerId,
+        won: item.winner === item.rightPlayerId,
+        lost: item.winner === item.leftPlayerId,
+      },
+      dead: item.dead === 1,
+      games: [
+        item.game1,
+        item.game2,
+        item.game3,
+        item.game4,
+        item.game5,
+      ].filter(Boolean),
+    });
 
     return accum;
   }, initialAccum);
