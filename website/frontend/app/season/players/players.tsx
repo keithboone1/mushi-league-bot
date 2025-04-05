@@ -55,6 +55,6 @@ type PlayersQuery = {
 
 export async function loader({ params: { season } }: Route.LoaderArgs) {
   return (await (
-    await fetch(`http://localhost:3001/api/season/${season}/players`)
+    await fetch(`https://mushileague.gg/api/season/${season}/players`)
   ).json()) as PlayersQuery;
 }

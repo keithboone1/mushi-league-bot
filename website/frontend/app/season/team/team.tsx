@@ -85,6 +85,6 @@ type TeamQuery = {
 
 export async function loader({ params: { season, teamId } }: Route.LoaderArgs) {
   return (await (
-    await fetch(`http://localhost:3001/api/season/${season}/team/${teamId}`)
+    await fetch(`https://mushileague.gg/api/season/${season}/team/${teamId}`)
   ).json()) as TeamQuery;
 }
