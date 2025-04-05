@@ -29,7 +29,7 @@ export default function Welcome({ loaderData }: Route.ComponentProps) {
           <h2 className="mb-2 text-center">Current Season</h2>
           <Link
             to={`/season/${currentSeason.number}/schedule`}
-            className="border rounded-md text-center hover:bg-gray-50"
+            className="border rounded-md text-center hover:bg-gray-50 w-sm max-w-full"
           >
             Season {currentSeason.number}
           </Link>
@@ -59,7 +59,7 @@ export default function Welcome({ loaderData }: Route.ComponentProps) {
 
 export async function loader() {
   const rawData = (await (
-    await fetch("https://mushileague.gg/api/seasons")
+    await fetch("http://localhost:3001/api/seasons")
   ).json()) as SeasonsQuery;
 
   const lastNumber = rawData.seasons[0].number;

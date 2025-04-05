@@ -89,7 +89,7 @@ async function newSeason(interaction) {
         await makeRegSeasonPairings(currentSeason.number + 1, length);
         await saveInitialStandings(currentSeason.number + 1);
 
-        setCurrentSeason();
+        await setCurrentSeason();
     }
 
     await baseHandler(interaction, dataCollector, verifier, onConfirm, false, false);

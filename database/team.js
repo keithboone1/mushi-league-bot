@@ -49,3 +49,14 @@ export async function loadTeamData(snowflake, season) {
      ORDER BY pstat.stars DESC`;
   return await db.all(query, snowflake, season);
 }
+
+export async function loadTeamsInLimitedPickOrder() {
+  const query =
+    "SELECT team.id, team.name, team.discord_snowflake, max(stars) AS priciestCaptain FROM team \
+     LEFT JOIN player ON team.id = player.team AND player.role = 2 \
+     WHERE team.active = 1 \
+     GROUP BY team.id \
+     ORDER BY priciestCaptain DESC";
+
+  return await db.all(query);
+}

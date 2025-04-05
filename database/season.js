@@ -36,3 +36,25 @@ export async function saveAdvanceWeek(season, week) {
     season
   );
 }
+
+export async function saveSeasonNumbers(
+  season,
+  minRoster,
+  maxRoster,
+  maxStars,
+  r1stars,
+  minLineup
+) {
+  const query =
+    "UPDATE season SET min_roster = ?, max_roster = ?, max_stars = ?, r1_stars = ?, min_lineup = ? WHERE number = ?";
+
+  await db.run(
+    query,
+    minRoster,
+    maxRoster,
+    maxStars,
+    r1stars,
+    minLineup,
+    season
+  );
+}

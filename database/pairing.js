@@ -137,13 +137,13 @@ export async function loadSchedule(season) {
       rightPlayer.id AS rightPlayerId, rightPlayer.name AS rightPlayerName, rightTeam.id AS rightTeamId, rightTeam.name AS rightTeamName, rightTeam.color AS rightTeamColor, \
       pairing.winner, pairing.dead, pairing.game1, pairing.game2, pairing.game3, pairing.game4, pairing.game5, \
       week.number AS weekNumber, matchup.id AS matchupId, season.regular_weeks, season.playoff_size FROM season \
-    LEFT JOIN week ON week.season = season.number \
+    INNER JOIN week ON week.season = season.number \
     LEFT JOIN matchup ON matchup.week = week.id \
     LEFT JOIN pairing ON pairing.matchup = matchup.id \
-    INNER JOIN team AS leftTeam ON matchup.left_team = leftTeam.id \
-    INNER JOIN team AS rightTeam ON matchup.right_team = rightTeam.id \
-    INNER JOIN player AS leftPlayer ON pairing.left_player = leftPlayer.id \
-    INNER JOIN player AS rightPlayer ON pairing.right_player = rightPlayer.id \
+    LEFT JOIN team AS leftTeam ON matchup.left_team = leftTeam.id \
+    LEFT JOIN team AS rightTeam ON matchup.right_team = rightTeam.id \
+    LEFT JOIN player AS leftPlayer ON pairing.left_player = leftPlayer.id \
+    LEFT JOIN player AS rightPlayer ON pairing.right_player = rightPlayer.id \
     WHERE season.number = ? \
     ORDER BY week.number ASC, matchup.room ASC, pairing.slot ASC";
 

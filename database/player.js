@@ -32,11 +32,15 @@ export async function savePlayerChange(
   active,
   season
 ) {
-  let updatePlayerQuery = `UPDATE player SET name = '${name}', stars = ${stars}, team = ${team ?? null}, role = ${role ?? null}, active = ${active} WHERE id = ${id};`;
+  let updatePlayerQuery = `UPDATE player SET name = '${name}', stars = ${stars}, team = ${
+    team ?? null
+  }, role = ${role ?? null}, active = ${active} WHERE id = ${id};`;
   if (team != null) {
-    const isDraftNotStartedYetSubquery = `SELECT season < ${season} FROM draft ORDER BY id DESC LIMIT 1`;
-    updatePlayerQuery += `INSERT INTO pstat (player, season, stars) VALUES (${id}, ${season}, ${stars}) ON CONFLICT DO UPDATE SET stars = ${stars}; \
-     INSERT INTO roster (season, player, team, role, retained) VALUES (${season}, ${id}, ${team}, ${role}, ${isDraftNotStartedYetSubquery}) ON CONFLICT DO UPDATE SET team = ${team}, role = ${role};`;
+    const isDraftNotStartedYetSubquery = `SELECT count(id) = 0 FROM draft WHERE season = ${season}`;
+    updatePlayerQuery += `INSERT INTO roster (season, player, team, role, retained) VALUES (${season}, ${id}, ${team}, ${role}, ${isDraftNotStartedYetSubquery}) ON CONFLICT DO UPDATE SET team = ${team}, role = ${role};`;
+  }
+  if (role === 1 || role === 2) {
+    updatePlayerQuery += `INSERT INTO pstat (player, season, stars) VALUES (${id}, ${season}, ${stars}) ON CONFLICT DO UPDATE SET stars = ${stars};`;
   }
 
   await db.exec(updatePlayerQuery);
@@ -148,4 +152,11 @@ export async function loadPlayersForSubstitution(
     replacedPlayerSnowflake,
     newPlayerSnowflake
   );
+}
+
+export async function getSeasonSize() {
+  const query =
+    "SELECT count(id) AS playerCount, sum(stars) AS starCount FROM player WHERE active = 1 AND role IS NULL OR role != 3";
+
+  return await db.get(query);
 }

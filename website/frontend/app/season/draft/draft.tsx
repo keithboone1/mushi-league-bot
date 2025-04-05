@@ -20,7 +20,7 @@ export default function Draft({ loaderData }: Route.ComponentProps) {
                     </div>
                     <div className="text-sm p-1 flex gap-1 justify-between">
                       <div className="whitespace-nowrap overflow-hidden text-ellipsis min-w-0">
-                        {pick.player.name}
+                        {pick.player.name ?? "​"}
                       </div>
                       <div className="shrink-0 font-semibold">
                         {pick.player.stars}
@@ -63,7 +63,7 @@ type DraftQuery = {
 
 export async function loader({ params: { season } }: Route.LoaderArgs) {
   const rawData = (await (
-    await fetch(`https://mushileague.gg/api/season/${season}/draft`)
+    await fetch(`http://localhost:3001/api/season/${season}/draft`)
   ).json()) as DraftQuery;
 
   const maxRoundLength = rawData.reduce(

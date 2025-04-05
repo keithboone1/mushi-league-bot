@@ -1,3 +1,1 @@
-Simple discord bot to help me manage mushi league.
-
-Real readme maybe coming later once the bot is done...
+Bot to manage Mushi League and mushi-like leagues. See checklists/ for common procedures. Contact jumpy23 on Discord with any questions.

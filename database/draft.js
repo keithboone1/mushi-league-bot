@@ -20,28 +20,35 @@ export async function loadNextPickRoundForTeam(teamId) {
 export async function loadDraft(season) {
   const query =
     "SELECT draft.round, draft.pick_order, team.id AS teamId, team.name AS teamName, team.color, player.id AS playerId, player.name AS playerName, pstat.stars FROM draft \
-     INNER JOIN player ON player.id = draft.pick \
+     LEFT JOIN player ON player.id = draft.pick \
      INNER JOIN team ON team.id = draft.team \
-     INNER JOIN pstat ON pstat.player = draft.pick AND pstat.season = draft.season \
+     LEFT JOIN pstat ON pstat.player = draft.pick AND pstat.season = draft.season \
      WHERE draft.season = ? \
      ORDER BY draft.round ASC, draft.pick_order ASC";
 
   return await db.all(query, season);
 }
 
-export async function saveDraftSetup(season, maxRoster, teamOrder) {
+export async function saveDraftSetup(
+  season,
+  maxRoster,
+  limitedRoundOrder,
+  normalOrder
+) {
   let query = "INSERT INTO draft (season, round, pick_order, team) VALUES";
 
   for (let round = 1; round <= maxRoster; round++) {
-    for (let order = 1; order <= teamOrder.length; order++) {
+    for (let order = 1; order <= normalOrder.length; order++) {
       const team =
-        round % 2 === 1
-          ? teamOrder[order - 1]
-          : teamOrder[teamOrder.length - order];
+        round === 1
+          ? limitedRoundOrder[order - 1]
+          : round % 2 === 0
+          ? normalOrder[order - 1]
+          : normalOrder[normalOrder.length - order];
 
       query += `\n(${season}, ${round}, ${order}, ${team})`;
 
-      if (round < maxRoster || order < teamOrder.length) {
+      if (round < maxRoster || order < normalOrder.length) {
         query += ",";
       }
     }

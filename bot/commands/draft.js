@@ -13,12 +13,13 @@ import {
   baseFunctionlessHandler,
   baseHandler,
 } from "./util.js";
-import { currentSeason, channels } from "../globals.js";
+import { currentSeason, channels, setCurrentSeason } from "../globals.js";
 import {
   loadPlayerFromSnowflake,
   loadRosterSize,
   savePlayerChange,
   loadUndraftedPlayers,
+  getSeasonSize,
 } from "../../database/player.js";
 import {
   loadNextPickTeam,
@@ -27,7 +28,13 @@ import {
   loadNextPickRoundForTeam,
   saveDraftSetup,
 } from "../../database/draft.js";
-import { loadTeamFromSnowflake, loadTeam } from "../../database/team.js";
+import {
+  loadTeamFromSnowflake,
+  loadTeamsInLimitedPickOrder,
+} from "../../database/team.js";
+import { saveSeasonNumbers } from "../../database/season.js";
+
+const OVERFLOW_SIZE = 3;
 
 export const DRAFT_COMMAND = {
   data: new SlashCommandBuilder()
@@ -357,7 +364,8 @@ async function recordDraftPick(draftId, team, pick) {
     pick.stars,
     team.teamId,
     1,
-    pick.active
+    pick.active,
+    currentSeason.number
   );
 }
 
@@ -488,23 +496,70 @@ async function initDraft(interaction) {
     }
 
     const order = interaction.options.getString("order").split(",");
-    let teamOrder = [];
-    for (const id of order) {
-      teamOrder.push(await loadTeam(id));
-    }
+    const teams = await loadTeamsInLimitedPickOrder();
+    const teamOrder = order.map((id) =>
+      teams.find((team) => team.id === Number(id))
+    );
 
-    return { teamOrder };
+    const seasonSize = await getSeasonSize();
+    const flooredPlayersPerTeam = Math.floor(
+      seasonSize.playerCount / teams.length
+    );
+    const remainder = seasonSize.playerCount % teams.length;
+    const minRoster =
+      remainder > teams.length / 2
+        ? flooredPlayersPerTeam
+        : flooredPlayersPerTeam - 1;
+    const maxRoster = minRoster + OVERFLOW_SIZE;
+
+    const r1stars = teams[0].priciestCaptain + 2;
+    const leftoverPlayers = seasonSize.playerCount - minRoster * teams.length;
+    const draftCap =
+      Math.ceil(
+        (10 *
+          (seasonSize.starCount + 0.5 * teams.length - 1.5 * leftoverPlayers)) /
+          teams.length
+      ) / 10;
+    const maxStars = draftCap + 1.5 * OVERFLOW_SIZE;
+
+    const minLineupBeforeOdding = Math.floor(minRoster * 0.7);
+    const minLineup =
+      minLineupBeforeOdding % 2 === 1
+        ? minLineupBeforeOdding
+        : minLineupBeforeOdding - 1;
+
+    return {
+      teams,
+      teamOrder,
+      minRoster,
+      maxRoster,
+      draftCap,
+      maxStars,
+      r1stars,
+      minLineup,
+    };
   }
 
   function verifier(data) {
-    const { teamOrder } = data;
+    const { teams, teamOrder, minRoster, draftCap, r1stars, minLineup } = data;
     let failures = [],
       prompts = [];
 
     prompts.push(
-      `Initialize draft in order ${teamOrder
+      `Limited round order: ${teams
         .map((team) => roleMention(team.discord_snowflake))
-        .join(", ")}?`
+        .join(", ")}`
+    );
+    prompts.push(
+      `Normal order: ${teamOrder
+        .map((team) => roleMention(team.discord_snowflake))
+        .join(", ")}`
+    );
+    prompts.push(
+      `Season numbers: Min roster size ${minRoster};` +
+        ` draft cap ${draftCap} + 1.5 per player over min;` +
+        ` limited round stars ${r1stars};` +
+        ` min lineup size ${minLineup}`
     );
 
     const confirmLabel = "Confirm Initialize Draft";
@@ -515,11 +570,31 @@ async function initDraft(interaction) {
   }
 
   async function onConfirm(data) {
-    const { teamOrder } = data;
+    const {
+      teams,
+      teamOrder,
+      minRoster,
+      maxRoster,
+      maxStars,
+      r1stars,
+      minLineup,
+    } = data;
+
+    await saveSeasonNumbers(
+      currentSeason.number,
+      minRoster,
+      maxRoster,
+      maxStars,
+      r1stars,
+      minLineup
+    );
+
+    await setCurrentSeason();
 
     await saveDraftSetup(
       currentSeason.number,
       currentSeason.max_roster,
+      teams.map((team) => team.id),
       teamOrder.map((team) => team.id)
     );
   }

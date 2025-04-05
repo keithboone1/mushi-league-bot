@@ -2,6 +2,8 @@ import { twMerge } from "tailwind-merge";
 import type { Route } from "./+types/schedule";
 
 export default function Schedule({ loaderData }: Route.ComponentProps) {
+  console.log(loaderData);
+
   return (
     <div className="flex flex-col gap-3">
       {loaderData.weeks.map((week, i) => (
@@ -162,7 +164,7 @@ type ScheduleData = {
 
 export async function loader({ params: { season } }: Route.LoaderArgs) {
   const rawData = (await (
-    await fetch(`https://mushileague.gg/api/season/${season}/schedule`)
+    await fetch(`http://localhost:3001/api/season/${season}/schedule`)
   ).json()) as ScheduleQuery;
 
   const regularWeeks = rawData[0].regular_weeks;
@@ -203,28 +205,31 @@ export async function loader({ params: { season } }: Route.LoaderArgs) {
       accum.weeks[item.weekNumber - 1].push(matchup);
     }
 
-    matchup.pairings.push({
-      leftPlayer: {
-        name: item.leftPlayerName,
-        id: item.leftPlayerId,
-        won: item.winner === item.leftPlayerId,
-        lost: item.winner === item.rightPlayerId,
-      },
-      rightPlayer: {
-        name: item.rightPlayerName,
-        id: item.rightPlayerId,
-        won: item.winner === item.rightPlayerId,
-        lost: item.winner === item.leftPlayerId,
-      },
-      dead: item.dead === 1,
-      games: [
-        item.game1,
-        item.game2,
-        item.game3,
-        item.game4,
-        item.game5,
-      ].filter(Boolean),
-    });
+    // canary value for the week existing
+    if (item.leftPlayerName) {
+      matchup.pairings.push({
+        leftPlayer: {
+          name: item.leftPlayerName,
+          id: item.leftPlayerId,
+          won: item.winner === item.leftPlayerId,
+          lost: item.winner === item.rightPlayerId,
+        },
+        rightPlayer: {
+          name: item.rightPlayerName,
+          id: item.rightPlayerId,
+          won: item.winner === item.rightPlayerId,
+          lost: item.winner === item.leftPlayerId,
+        },
+        dead: item.dead === 1,
+        games: [
+          item.game1,
+          item.game2,
+          item.game3,
+          item.game4,
+          item.game5,
+        ].filter(Boolean),
+      });
+    }
 
     return accum;
   }, initialAccum);
