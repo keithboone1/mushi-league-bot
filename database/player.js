@@ -32,13 +32,14 @@ export async function savePlayerChange(
   active,
   season
 ) {
-  let updatePlayerQuery = `UPDATE player SET name = '${name}', stars = ${stars}, team = ${team}, role = ${role}, active = ${active} WHERE id = ${id};`;
-  if (team !== null) {
+  let updatePlayerQuery = `UPDATE player SET name = '${name}', stars = ${stars}, team = ${team ?? null}, role = ${role ?? null}, active = ${active} WHERE id = ${id};`;
+  if (team != null) {
+    const isDraftNotStartedYetSubquery = `SELECT season < ${season} FROM draft ORDER BY id DESC LIMIT 1`;
     updatePlayerQuery += `INSERT INTO pstat (player, season, stars) VALUES (${id}, ${season}, ${stars}) ON CONFLICT DO UPDATE SET stars = ${stars}; \
-     INSERT INTO roster (season, player, team, role) VALUES (${season}, ${id}, ${team}, ${role}) ON CONFLICT DO UPDATE SET team = ${team}, role = ${role};`;
+     INSERT INTO roster (season, player, team, role, retained) VALUES (${season}, ${id}, ${team}, ${role}, ${isDraftNotStartedYetSubquery}) ON CONFLICT DO UPDATE SET team = ${team}, role = ${role};`;
   }
 
-  await db.run(updatePlayerQuery);
+  await db.exec(updatePlayerQuery);
 }
 
 export async function loadAllActivePlayers() {
@@ -116,7 +117,7 @@ export async function loadRosterSize(teamId, captainOnly) {
 
 export async function loadUndraftedPlayers(maxStars) {
   return await db.all(
-    "SELECT name, stars, discord_snowflake FROM player WHERE team IS NULL AND active = 1 AND stars <= ? ORDER BY stars DESC",
+    "SELECT name, stars, discord_snowflake FROM player WHERE team IS NULL AND active = 1 AND stars <= ? ORDER BY stars DESC, LOWER(name) ASC",
     maxStars
   );
 }

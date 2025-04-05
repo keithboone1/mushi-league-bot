@@ -197,7 +197,7 @@ function prettyDraftList(availablePlayers) {
 }
 
 function prettyTextPlayer(player) {
-  return `${rightAlign(6, fixFloat(player.stars))}| ${player.name}`;
+  return `${rightAlign(6, player.stars.toFixed(2))}| ${player.name}`;
 }
 
 async function maxStarsNext(teamId, round) {
