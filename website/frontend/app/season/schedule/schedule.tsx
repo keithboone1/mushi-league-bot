@@ -1,6 +1,7 @@
 import { twJoin, twMerge } from "tailwind-merge";
 import type { Route } from "./+types/schedule";
 import { teamColorText } from "~/util/util";
+import { format } from "date-fns";
 
 export default function Schedule({ loaderData }: Route.ComponentProps) {
   return (
@@ -66,7 +67,8 @@ export default function Schedule({ loaderData }: Route.ComponentProps) {
                             act
                           </span>,
                         ]
-                      : p.games.map((game, i) =>
+                      : p.games.length > 0
+                      ? p.games.map((game, i) =>
                           game.startsWith("http") ? (
                             <div
                               key={i}
@@ -85,7 +87,14 @@ export default function Schedule({ loaderData }: Route.ComponentProps) {
                               {game}
                             </span>
                           )
-                        );
+                        )
+                      : p.scheduledTime
+                      ? [
+                          <span key="time" className="basis-full text-center">
+                            {format(p.scheduledTime, "ccc, MMM d p")}
+                          </span>,
+                        ]
+                      : [<span key="blank" />];
                     while (p.games.length > 0 && gameLinks.length < 3) {
                       gameLinks.push(
                         <span key={2} className="basis-full px-2" />
@@ -151,6 +160,7 @@ type ScheduleQuery = {
   game5: string;
   weekNumber: number;
   matchupId: number;
+  scheduled_datetime: number;
 }[];
 
 type PlayerData = {
@@ -165,6 +175,7 @@ type PairingData = {
   rightPlayer: PlayerData;
   dead: boolean;
   act: boolean;
+  scheduledTime: Date | null;
   games: string[];
 };
 
@@ -263,6 +274,9 @@ export async function loader({ params: { season } }: Route.LoaderArgs) {
       },
       dead: item.dead === 1,
       act: !!item.winner && games.length === 0,
+      scheduledTime: !!item.scheduled_datetime
+        ? new Date(item.scheduled_datetime)
+        : null,
       games,
     });
 
