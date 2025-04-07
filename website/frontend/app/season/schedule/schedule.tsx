@@ -60,7 +60,7 @@ export default function Schedule({ loaderData }: Route.ComponentProps) {
                             dead
                           </span>,
                         ]
-                      : p.games.length === 0
+                      : p.act
                       ? [
                           <span key={0} className="basis-full text-center">
                             act
@@ -164,6 +164,7 @@ type PairingData = {
   leftPlayer: PlayerData;
   rightPlayer: PlayerData;
   dead: boolean;
+  act: boolean;
   games: string[];
 };
 
@@ -239,6 +240,14 @@ export async function loader({ params: { season } }: Route.LoaderArgs) {
       return accum;
     }
 
+    const games = [
+      item.game1,
+      item.game2,
+      item.game3,
+      item.game4,
+      item.game5,
+    ].filter(Boolean);
+
     matchup.pairings.push({
       leftPlayer: {
         name: item.leftPlayerName,
@@ -253,13 +262,8 @@ export async function loader({ params: { season } }: Route.LoaderArgs) {
         lost: item.winner === item.leftPlayerId,
       },
       dead: item.dead === 1,
-      games: [
-        item.game1,
-        item.game2,
-        item.game3,
-        item.game4,
-        item.game5,
-      ].filter(Boolean),
+      act: !!item.winner && games.length === 0,
+      games,
     });
 
     return accum;
