@@ -152,7 +152,7 @@ async function listPlayers(interaction) {
           await maxStarsNext(
             submitter.teamId,
             (
-              await loadNextPickRoundForTeam(submitter.teamId)
+              await loadNextPickRoundForTeam(submitter.teamId, currentSeason.number)
             ).round
           )
         );
@@ -251,7 +251,7 @@ async function pickPlayer(interaction) {
       };
     }
 
-    const nextPickTeam = await loadNextPickTeam();
+    const nextPickTeam = await loadNextPickTeam(currentSeason.number);
 
     const team = override
       ? {
@@ -386,7 +386,7 @@ async function notifyAfterPick() {
 }
 
 async function pingNextTeam() {
-  const nextPickTeam = await loadNextPickTeam();
+  const nextPickTeam = await loadNextPickTeam(currentSeason.number);
   const maxStars = fixFloat(
     await maxStarsNext(nextPickTeam.teamId, nextPickTeam.round)
   );
@@ -428,7 +428,7 @@ async function withdrawTeam(interaction) {
     const rosterSize = (await loadRosterSize(teamData.id, false)).size;
 
     const teamIsUp =
-      (await loadNextPickTeam()).discord_snowflake === teamData.teamSnowflake;
+      (await loadNextPickTeam(currentSeason.number)).discord_snowflake === teamData.teamSnowflake;
 
     return { submitter, team: teamData, rosterSize, overriddenTeam, teamIsUp };
   }
@@ -615,7 +615,7 @@ async function startDraft(interaction) {
       return { failure: "You must be an owner to use this command." };
     }
 
-    const firstPickTeam = await loadNextPickTeam();
+    const firstPickTeam = await loadNextPickTeam(currentSeason.number);
 
     if (!firstPickTeam) {
       return { failure: "There does not seem to be a draft upcoming" };

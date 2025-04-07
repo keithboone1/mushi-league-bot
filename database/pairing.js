@@ -139,7 +139,7 @@ export async function loadSchedule(season) {
       week.number AS weekNumber, matchup.id AS matchupId, season.regular_weeks, season.playoff_size FROM season \
     INNER JOIN week ON week.season = season.number \
     LEFT JOIN matchup ON matchup.week = week.id \
-    LEFT JOIN pairing ON pairing.matchup = matchup.id \
+    LEFT JOIN pairing ON pairing.matchup = matchup.id AND matchup.week <= season.current_week \
     LEFT JOIN team AS leftTeam ON matchup.left_team = leftTeam.id \
     LEFT JOIN team AS rightTeam ON matchup.right_team = rightTeam.id \
     LEFT JOIN player AS leftPlayer ON pairing.left_player = leftPlayer.id \

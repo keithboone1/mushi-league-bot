@@ -37,7 +37,7 @@ export async function savePlayerChange(
   }, role = ${role ?? null}, active = ${active} WHERE id = ${id};`;
   if (team != null) {
     const isDraftNotStartedYetSubquery = `SELECT count(id) = 0 FROM draft WHERE season = ${season}`;
-    updatePlayerQuery += `INSERT INTO roster (season, player, team, role, retained) VALUES (${season}, ${id}, ${team}, ${role}, ${isDraftNotStartedYetSubquery}) ON CONFLICT DO UPDATE SET team = ${team}, role = ${role};`;
+    updatePlayerQuery += `INSERT INTO roster (season, player, team, role, retained) VALUES (${season}, ${id}, ${team}, ${role}, (${isDraftNotStartedYetSubquery})) ON CONFLICT DO UPDATE SET team = ${team}, role = ${role};`;
   }
   if (role === 1 || role === 2) {
     updatePlayerQuery += `INSERT INTO pstat (player, season, stars) VALUES (${id}, ${season}, ${stars}) ON CONFLICT DO UPDATE SET stars = ${stars};`;
