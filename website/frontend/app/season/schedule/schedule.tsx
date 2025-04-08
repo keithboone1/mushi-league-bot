@@ -117,7 +117,7 @@ export default function Schedule({ loaderData }: Route.ComponentProps) {
                         </td>
                         <td
                           className={twMerge(
-                            "text-left border pr-2",
+                            "text-left border pl-2",
                             p.rightPlayer.won && "bg-green-100",
                             p.rightPlayer.lost && "bg-red-100",
                             p.dead && "bg-gray-200"
