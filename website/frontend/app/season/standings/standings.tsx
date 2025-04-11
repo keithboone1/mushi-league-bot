@@ -1,6 +1,6 @@
 import { twJoin } from "tailwind-merge";
 import type { Route } from "./+types/standings";
-import { teamColorText } from "~/util/util";
+import { teamColorText } from "util/util";
 
 export default function Standings({ loaderData }: Route.ComponentProps) {
   return (

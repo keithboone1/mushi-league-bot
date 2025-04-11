@@ -2,7 +2,7 @@ import { NavLink, Outlet, useLocation } from "react-router";
 import { twMerge } from "tailwind-merge";
 import { ArrowLeft } from "lucide-react";
 import type { Route } from "./+types/season";
-import { teamInitials } from "~/util/util";
+import { teamInitials } from "util/util";
 
 type TeamQuery = {
   id: number;

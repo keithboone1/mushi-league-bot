@@ -9,6 +9,7 @@ import { loadWebStandings } from "../database/standing.js";
 import { loadSchedule } from "../database/pairing.js";
 import { loadPlayerStats } from "../database/pstat.js";
 import { loadDraft } from "../database/draft.js";
+import { loadPlayerHistory } from "../database/player.js";
 
 const app = express();
 const port = 3001;
@@ -53,6 +54,12 @@ app.get("/api/season/:number/draft", async (req, res) => {
 
 app.get("/api/season/:number/team/:id", async (req, res) => {
   const data = await loadTeamSheet(req.params.id, req.params.number);
+  res.set("Access-Control-Allow-Origin", "*");
+  res.send(JSON.stringify(data));
+});
+
+app.get("/api/players/:id", async (req, res) => {
+  const data = await loadPlayerHistory(req.params.id);
   res.set("Access-Control-Allow-Origin", "*");
   res.send(JSON.stringify(data));
 });

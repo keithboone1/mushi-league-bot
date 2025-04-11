@@ -1,6 +1,7 @@
+import { NavLink } from "react-router";
 import type { Route } from "./+types/players";
 
-export default function Players({loaderData}: Route.ComponentProps) {
+export default function Players({ loaderData }: Route.ComponentProps) {
   return (
     <>
       <h2>Player ratings</h2>
@@ -23,7 +24,9 @@ export default function Players({loaderData}: Route.ComponentProps) {
           {loaderData.map((player, i) => (
             <tr key={player.id}>
               <td className="px-2 text-center">{i + 1}</td>
-              <td className="px-2 py-0.5 font-semibold">{player.name}</td>
+              <td className="px-2 py-0.5 font-semibold underline">
+                <NavLink to={`/players/${player.id}`}>{player.name}</NavLink>
+              </td>
               <td className="px-2 text-center">{player.differential}</td>
               <td className="px-2 text-center">{player.wins}</td>
               <td className="px-2 text-center">{player.act_wins}</td>
@@ -38,7 +41,7 @@ export default function Players({loaderData}: Route.ComponentProps) {
       </table>
     </>
   );
-};
+}
 
 type PlayersQuery = {
   id: number;
@@ -51,7 +54,7 @@ type PlayersQuery = {
   ties: number;
   star_points: number;
   stars: number;
-}[]
+}[];
 
 export async function loader({ params: { season } }: Route.LoaderArgs) {
   return (await (

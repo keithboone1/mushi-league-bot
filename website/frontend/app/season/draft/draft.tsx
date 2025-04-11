@@ -1,6 +1,7 @@
-import { teamColorText, teamInitials } from "~/util/util";
+import { teamColorText, teamInitials } from "util/util";
 import type { Route } from "./+types/draft";
 import { twJoin } from "tailwind-merge";
+import { NavLink } from "react-router";
 
 export default function Draft({ loaderData }: Route.ComponentProps) {
   const { captains, retains, picks } = loaderData;
@@ -31,7 +32,12 @@ export default function Draft({ loaderData }: Route.ComponentProps) {
                       </div>
                       <div className="text-sm p-1 flex gap-1 justify-between">
                         <div className="whitespace-nowrap overflow-hidden text-ellipsis min-w-0">
-                          {captain[i].player?.name}
+                          <NavLink
+                            to={`/players/${captain[i].player?.id}`}
+                            className="underline"
+                          >
+                            {captain[i].player?.name}
+                          </NavLink>
                         </div>
                         <div className="shrink-0 font-semibold">
                           {captain[i].player?.stars}
@@ -65,7 +71,12 @@ export default function Draft({ loaderData }: Route.ComponentProps) {
                       </div>
                       <div className="text-sm p-1 flex gap-1 justify-between">
                         <div className="whitespace-nowrap overflow-hidden text-ellipsis min-w-0">
-                          {retain[i].player?.name}
+                          <NavLink
+                            to={`/players/${retain[i].player?.id}`}
+                            className="underline"
+                          >
+                            {retain[i].player?.name}
+                          </NavLink>
                         </div>
                         <div className="shrink-0 font-semibold">
                           {retain[i].player?.stars}
@@ -99,7 +110,12 @@ export default function Draft({ loaderData }: Route.ComponentProps) {
                       </div>
                       <div className="text-sm p-1 flex gap-1 justify-between">
                         <div className="whitespace-nowrap overflow-hidden text-ellipsis min-w-0">
-                          {pick.player?.name ?? "​"}
+                          <NavLink
+                            to={`/players/${pick.player?.id}`}
+                            className="underline"
+                          >
+                            {pick.player?.name ?? "​"}
+                          </NavLink>
                         </div>
                         <div className="shrink-0 font-semibold">
                           {pick.player?.stars}

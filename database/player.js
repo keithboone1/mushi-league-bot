@@ -160,3 +160,34 @@ export async function getSeasonSize() {
 
   return await db.get(query);
 }
+
+export async function loadPlayerHistory(playerId) {
+  const playerInfoQuery =
+    "SELECT player.name AS playerName, roster.season, role.name AS roleName, pstat.stars, pstat.wins, pstat.act_wins, pstat.losses, pstat.act_losses, pstat.ties, pstat.star_points, team.id AS teamId, team.name AS teamName, team.color \
+     FROM player \
+     INNER JOIN roster ON roster.player = player.id \
+     LEFT JOIN pstat ON pstat.player = player.id AND pstat.season = roster.season \
+     INNER JOIN team ON team.id = roster.team \
+     INNER JOIN role ON role.id = roster.role \
+     WHERE player.id = ? \
+     ORDER BY roster.season DESC";
+
+  const pairingQuery =
+    "SELECT slot, game1, game2, game3, game4, game5, winner, dead, week.season, week.number as weekNumber, season.regular_weeks, season.playoff_size, opponent.id AS opponentId, opponent.name AS opponentName, opponentPstat.stars AS opponentStars, opponentTeam.name AS opponentTeam, opponentTeam.color AS opponentTeamColor \
+     FROM pairing \
+     INNER JOIN matchup ON pairing.matchup = matchup.id \
+     INNER JOIN week ON matchup.week = week.id \
+     INNER JOIN season ON season.number = week.season \
+     INNER JOIN player AS opponent ON opponent.id = IIF(pairing.left_player = ?, pairing.right_player, pairing.left_player) \
+     INNER JOIN pstat AS opponentPstat ON opponentPstat.player = opponent.id AND opponentPstat.season = week.season \
+     INNER JOIN team AS opponentTeam ON opponentTeam.id = IIF(pairing.left_player = ?, matchup.right_team, matchup.left_team) \
+     WHERE pairing.left_player = ? OR pairing.right_player = ? \
+     ORDER BY week.season DESC, week.number DESC";
+
+  const [playerInfo, pairings] = await Promise.all([
+    db.all(playerInfoQuery, playerId),
+    db.all(pairingQuery, playerId, playerId, playerId, playerId),
+  ]);
+
+  return { playerInfo, pairings };
+}

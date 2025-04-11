@@ -1,7 +1,8 @@
 import { twJoin, twMerge } from "tailwind-merge";
 import type { Route } from "./+types/schedule";
-import { teamColorText } from "~/util/util";
+import { teamColorText } from "util/util";
 import { format } from "date-fns";
+import { NavLink } from "react-router";
 
 export default function Schedule({ loaderData }: Route.ComponentProps) {
   return (
@@ -75,7 +76,7 @@ export default function Schedule({ loaderData }: Route.ComponentProps) {
                               className="basis-full flex px-2 not-last:border-r"
                             >
                               <a
-                                className="basis-full grow text-center underline text-sm text-[blue] active:text-[purple]"
+                                className="basis-full grow text-center text-sm text-[blue] active:text-[purple] underline"
                                 href={game}
                               >{`g${i + 1}`}</a>
                             </div>
@@ -110,7 +111,12 @@ export default function Schedule({ loaderData }: Route.ComponentProps) {
                             p.dead && "bg-gray-200"
                           )}
                         >
-                          {p.leftPlayer.name}
+                          <NavLink
+                            to={`/players/${p.leftPlayer.id}`}
+                            className="underline"
+                          >
+                            {p.leftPlayer.name}
+                          </NavLink>
                         </td>
                         <td className="border-t">
                           <div className="flex items-center">{gameLinks}</div>
@@ -123,7 +129,12 @@ export default function Schedule({ loaderData }: Route.ComponentProps) {
                             p.dead && "bg-gray-200"
                           )}
                         >
-                          {p.rightPlayer.name}
+                          <NavLink
+                            to={`/players/${p.rightPlayer.id}`}
+                            className="underline"
+                          >
+                            {p.rightPlayer.name}
+                          </NavLink>
                         </td>
                       </tr>
                     );
