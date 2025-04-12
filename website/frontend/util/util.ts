@@ -10,3 +10,21 @@ export const teamColorText = (color: string) => {
   );
   return rgb.every((hex) => hex < 128) ? "text-white" : "text-black";
 };
+
+export function weekName(week: number, regular_weeks: number, playoff_size: number) {
+  if (week <= regular_weeks) {
+    return `Week ${week}`;
+  }
+
+  const totalWeeks = regular_weeks + Math.ceil(Math.log2(playoff_size));
+  switch (week) {
+    case totalWeeks:
+      return "Finals";
+    case totalWeeks - 1:
+      return "Semifinals";
+    case totalWeeks - 2:
+      return "Quarterfinals";
+    default:
+      return "go yell at jumpy to fix this";
+  }
+}

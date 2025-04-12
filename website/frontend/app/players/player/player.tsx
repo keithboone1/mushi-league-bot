@@ -2,7 +2,7 @@ import { NavLink } from "react-router";
 import { twJoin, twMerge } from "tailwind-merge";
 import { ArrowLeft } from "lucide-react";
 import type { Route } from "./+types/player";
-import { teamColorText } from "util/util";
+import { teamColorText, weekName } from "util/util";
 
 type PlayerQuery = {
   playerInfo: {
@@ -40,24 +40,6 @@ type PlayerQuery = {
     opponentTeamColor: string;
   }[];
 };
-
-function weekName(week: number, regular_weeks: number, playoff_size: number) {
-  if (week <= regular_weeks) {
-    return `Week ${week}`;
-  }
-
-  const totalWeeks = regular_weeks + Math.ceil(Math.log2(playoff_size));
-  switch (week) {
-    case totalWeeks:
-      return "Finals";
-    case totalWeeks - 1:
-      return "Semifinals";
-    case totalWeeks - 2:
-      return "Quarterfinals";
-    default:
-      return "go yell at jumpy to fix this";
-  }
-}
 
 export default function Season({
   params: { playerId },
