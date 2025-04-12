@@ -173,7 +173,7 @@ export async function loadPlayerHistory(playerId) {
      ORDER BY roster.season DESC";
 
   const pairingQuery =
-    "SELECT slot, game1, game2, game3, game4, game5, winner, dead, week.season, week.number as weekNumber, season.regular_weeks, season.playoff_size, opponent.id AS opponentId, opponent.name AS opponentName, opponentPstat.stars AS opponentStars, opponentTeam.name AS opponentTeam, opponentTeam.color AS opponentTeamColor \
+    "SELECT slot, game1, game2, game3, game4, game5, pairing.winner, dead, week.season, week.number as weekNumber, season.regular_weeks, season.playoff_size, opponent.id AS opponentId, opponent.name AS opponentName, opponentPstat.stars AS opponentStars, opponentTeam.name AS opponentTeam, opponentTeam.color AS opponentTeamColor \
      FROM pairing \
      INNER JOIN matchup ON pairing.matchup = matchup.id \
      INNER JOIN week ON matchup.week = week.id \
