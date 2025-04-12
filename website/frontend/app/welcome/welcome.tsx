@@ -29,12 +29,19 @@ export default function Welcome({ loaderData }: Route.ComponentProps) {
           <h2 className="mb-2 text-center">Current Season</h2>
           <Link
             to={`/season/${currentSeason.number}/schedule`}
-            className="border rounded-md text-center hover:bg-gray-50 w-sm max-w-full"
+            className="border py-1 rounded-md text-center hover:bg-gray-50 w-sm max-w-full mb-4"
           >
             Season {currentSeason.number}
           </Link>
         </>
       )}
+      <h2 className="mb-2 text-center">All players</h2>
+      <Link
+        to={`/players`}
+        className="border py-1 rounded-md text-center hover:bg-gray-50 w-sm max-w-full mb-4"
+      >
+        View players
+      </Link>
       <h2 className="mb-2 text-center">Past Seasons</h2>
       <div className="flex flex-col gap-2 max-w-full w-sm">
         {pastSeasons.map((s) =>
@@ -42,7 +49,7 @@ export default function Welcome({ loaderData }: Route.ComponentProps) {
             <Link
               key={s.number}
               to={`/season/${s.number}/schedule`}
-              className="border rounded-md text-center hover:bg-gray-50"
+              className="border py-1 rounded-md text-center hover:bg-gray-50"
             >
               Season {s.number}
             </Link>

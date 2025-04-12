@@ -73,9 +73,9 @@ export default function Season({
 
   return (
     <>
-      <NavLink to="/" className="inline-flex gap-1 items-center">
+      <NavLink to="/players" className="inline-flex gap-1 items-center">
         <ArrowLeft size={16} />
-        Return to home
+        Return to all players
       </NavLink>
       <h1 className="mb-1">{loaderData[0].playerName}</h1>
       {loaderData.map((season) => (
