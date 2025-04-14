@@ -532,8 +532,7 @@ async function nextWeek(interaction) {
       currentSeason.current_week
     );
     const matchupsMissingLineups = await loadMatchupsMissingLineups(
-      currentSeason.number,
-      currentSeason.current_week + 1
+      currentSeason.number
     );
     const userForAutoLineups = await loadPlayerFromSnowflake(
       interaction.user.id

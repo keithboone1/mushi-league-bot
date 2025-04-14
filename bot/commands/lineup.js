@@ -223,17 +223,8 @@ async function submitLineup(interaction) {
                 for (let j = i + 1; j < lineup.length; j++) {
                     const lowerPlayer = lineup[j];
 
-                    if (fixFloat(lowerPlayer.stars - player.stars) > 0.7) {
-                        const playerIndex = roster.findIndex(p => p.id === player.id);
-                        let nextStrongestPlayerIndex = playerIndex - 1;
-
-                        while (roster[nextStrongestPlayerIndex].stars === player.stars || roster[nextStrongestPlayerIndex].roleName === 'Coach') {
-                            nextStrongestPlayerIndex -= 1;
-                        }
-
-                        if (roster[nextStrongestPlayerIndex].id !== lowerPlayer.id) {
-                            addModOverrideableFailure(isMod, failures, prompts, `You submitted ${userMention(lowerPlayer.discord_snowflake)} below ${userMention(player.discord_snowflake)}, but the star rules don't permit that.`);
-                        }
+                    if (fixFloat(lowerPlayer.stars - player.stars) > 0.3) {
+                        addModOverrideableFailure(isMod, failures, prompts, `You submitted ${userMention(lowerPlayer.discord_snowflake)} below ${userMention(player.discord_snowflake)}, but the star rules don't permit that.`);
                     }
                 }
             }
@@ -351,7 +342,7 @@ async function substitutePlayer(interaction) {
             failures.push(`You're subbing in ${userMention(newPlayer.discord_snowflake)}, but they're a coach and can't play.`);
         }
 
-        if ((fixFloat(newPlayer.stars) - fixFloat(replacedPlayer.stars)) > 0.7) {
+        if ((fixFloat(newPlayer.stars) - fixFloat(replacedPlayer.stars)) > 0.3) {
             addModOverrideableFailure(isMod, failures, prompts, `You're subbing in ${userMention(newPlayer.discord_snowflake)} over ${userMention(replacedPlayer.discord_snowflake)}, but the star rules don't permit that.`);
         }
 
@@ -388,7 +379,7 @@ async function houndCaptains(interaction) {
             return { failure: 'You must be a mod to use this command!' };
         }
 
-        const missingLineups = await loadMatchupsMissingLineups(currentSeason.number, currentSeason.current_week + 1);
+        const missingLineups = await loadMatchupsMissingLineups(currentSeason.number);
 
         return { missingLineups };
     }

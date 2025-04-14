@@ -8,12 +8,34 @@ export default function Schedule({ loaderData }: Route.ComponentProps) {
   return (
     <div className="flex flex-col gap-3">
       {loaderData.weeks.map((week, i) => (
-        <>
-          <h2>
-            {weekName(i + 1, loaderData.regularWeeks, loaderData.playoffSize)}
-          </h2>
+        <details open>
+          <summary>
+            <h2 className="inline">
+              {weekName(i + 1, loaderData.regularWeeks, loaderData.playoffSize)}
+            </h2>
+          </summary>
+
+          {week.missingLineups.length > 0 && (
+            <div className="mb-2">
+              <div>Still need lineups from:</div>
+              <div className="flex gap-2 flex-wrap">
+                {week.missingLineups.map((team) => (
+                  <div
+                    className={twJoin(
+                      "px-1 whitespace-nowrap",
+                      teamColorText(team.color)
+                    )}
+                    style={{ backgroundColor: team.color }}
+                  >
+                    {team.name}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="flex gap-3 w-fit flex-wrap" key={i}>
-            {week.map((matchup) => {
+            {week.matchups.map((matchup) => {
               const { leftWins, rightWins } = matchup.pairings.reduce(
                 (accum, item) => {
                   if (item.leftPlayer.won) {
@@ -148,36 +170,39 @@ export default function Schedule({ loaderData }: Route.ComponentProps) {
               );
             })}
           </div>
-        </>
+        </details>
       ))}
     </div>
   );
 }
 
 type ScheduleQuery = {
-  leftPlayerId: number;
-  leftPlayerName: string;
-  leftTeamId: number;
-  leftTeamName: string;
-  leftTeamColor: string;
-  rightPlayerId: number;
-  rightPlayerName: string;
-  rightTeamId: number;
-  rightTeamName: string;
-  rightTeamColor: string;
-  regular_weeks: number;
-  playoff_size: number;
-  winner: number;
-  dead: number;
-  game1: string;
-  game2: string;
-  game3: string;
-  game4: string;
-  game5: string;
-  weekNumber: number;
-  matchupId: number;
-  scheduled_datetime: number;
-}[];
+  schedule: {
+    leftPlayerId: number;
+    leftPlayerName: string;
+    leftTeamId: number;
+    leftTeamName: string;
+    leftTeamColor: string;
+    rightPlayerId: number;
+    rightPlayerName: string;
+    rightTeamId: number;
+    rightTeamName: string;
+    rightTeamColor: string;
+    regular_weeks: number;
+    playoff_size: number;
+    winner: number;
+    dead: number;
+    game1: string;
+    game2: string;
+    game3: string;
+    game4: string;
+    game5: string;
+    weekNumber: number;
+    matchupId: number;
+    scheduled_datetime: number;
+  }[];
+  missingLineups: { name: string; color: string; week: number }[];
+};
 
 type PlayerData = {
   id: number;
@@ -211,7 +236,10 @@ type MatchupData = {
 type ScheduleData = {
   regularWeeks: number;
   playoffSize: number;
-  weeks: MatchupData[][];
+  weeks: {
+    missingLineups: { name: string; color: string }[];
+    matchups: MatchupData[];
+  }[];
 };
 
 export async function loader({ params: { season } }: Route.LoaderArgs) {
@@ -219,17 +247,18 @@ export async function loader({ params: { season } }: Route.LoaderArgs) {
     await fetch(`https://mushileague.gg/api/season/${season}/schedule`)
   ).json()) as ScheduleQuery;
 
-  const regularWeeks = rawData[0].regular_weeks;
-  const playoffSize = rawData[0].playoff_size;
+  const regularWeeks = rawData.schedule[0].regular_weeks;
+  const playoffSize = rawData.schedule[0].playoff_size;
   const totalWeeks = Math.ceil(regularWeeks + Math.log2(playoffSize));
+  const weekWithMissingLineups = rawData.missingLineups.at(0)?.week;
 
   const initialAccum: ScheduleData = {
-    regularWeeks: rawData[0].regular_weeks,
-    playoffSize: rawData[0].playoff_size,
+    regularWeeks: rawData.schedule[0].regular_weeks,
+    playoffSize: rawData.schedule[0].playoff_size,
     weeks: new Array(totalWeeks),
   };
 
-  return rawData.reduce((accum, item) => {
+  const formattedSchedule = rawData.schedule.reduce((accum, item) => {
     // canary value for the week existing
     if (!item.leftTeamName) {
       return accum;
@@ -238,11 +267,13 @@ export async function loader({ params: { season } }: Route.LoaderArgs) {
     let week = accum.weeks.at(item.weekNumber - 1);
 
     if (week === undefined) {
-      week = [];
+      week = { matchups: [], missingLineups: [] };
       accum.weeks[item.weekNumber - 1] = week;
     }
 
-    let matchup = week.find((matchup) => matchup.id === item.matchupId);
+    let matchup = week.matchups.find(
+      (matchup) => matchup.id === item.matchupId
+    );
 
     if (matchup === undefined) {
       matchup = {
@@ -259,7 +290,7 @@ export async function loader({ params: { season } }: Route.LoaderArgs) {
         },
         pairings: [],
       };
-      accum.weeks[item.weekNumber - 1].push(matchup);
+      accum.weeks[item.weekNumber - 1].matchups.push(matchup);
     }
 
     // canary value for the pairings existing
@@ -298,4 +329,11 @@ export async function loader({ params: { season } }: Route.LoaderArgs) {
 
     return accum;
   }, initialAccum);
+
+  if (weekWithMissingLineups) {
+    formattedSchedule.weeks[weekWithMissingLineups - 1].missingLineups =
+      rawData.missingLineups;
+  }
+
+  return formattedSchedule;
 }

@@ -1,4 +1,5 @@
 import { db } from "./database.js";
+import { loadMatchupsMissingLineups } from "./matchup.js";
 
 export async function loadAllPairings(season, week) {
   const query =
@@ -147,7 +148,12 @@ export async function loadSchedule(season) {
     WHERE season.number = ? \
     ORDER BY week.number ASC, matchup.room ASC, pairing.slot ASC";
 
-  return await db.all(query, season);
+  const [schedule, missingLineups] = await Promise.all([
+    db.all(query, season),
+    loadMatchupsMissingLineups(season),
+  ]);
+
+  return { schedule: schedule, missingLineups: missingLineups };
 }
 
 export async function savePairingResult(pairingId, games, winner, dead) {
