@@ -35,7 +35,7 @@ export async function loadPredictionsStandings(season) {
      LEFT JOIN player ON player.discord_snowflake = prediction.predictor_snowflake \
      WHERE pairing.game1 IS NOT NULL AND week.season = ? \
      GROUP BY prediction.predictor_snowflake \
-     ORDER BY correctPredictions DESC";
+     ORDER BY correctPredictions DESC, totalPredictions DESC";
 
   return await db.all(standingsQuery, season);
 }
