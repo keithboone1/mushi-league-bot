@@ -67,7 +67,7 @@ export async function loadMatchupsMissingLineups(season) {
     "SELECT matchup.id, team.id AS submittingTeamId, team.name, team.color, team.discord_snowflake AS delinquentTeamSnowflake, matchup.left_team, matchup.right_team, matchup.slots AS matchupSlots, matchup.rigged_count, week.number AS week \
      FROM team \
      INNER JOIN matchup ON matchup.left_team = team.id OR matchup.right_team = team.id \
-     LEFT JOIN pairing ON pairing.matchup = matchup.id \
+     LEFT JOIN pairing ON pairing.matchup = matchup.id AND pairing.slot = 1 \
      INNER JOIN week ON week.id = matchup.week \
      INNER JOIN season ON season.number = week.season \
      WHERE iif(team.id = matchup.left_team, pairing.left_player, pairing.right_player) IS NULL AND week.season = ? AND week.number = season.current_week + 1";
