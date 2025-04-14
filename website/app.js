@@ -10,6 +10,7 @@ import { loadSchedule } from "../database/pairing.js";
 import { loadPlayerStats } from "../database/pstat.js";
 import { loadDraft } from "../database/draft.js";
 import { loadAllPlayersEver, loadPlayerHistory } from "../database/player.js";
+import { loadPredictionsStandings } from "../database/prediction.js";
 
 const app = express();
 const port = 3001;
@@ -42,6 +43,12 @@ app.get("/api/season/:number/standings", async (req, res) => {
 
 app.get("/api/season/:number/players", async (req, res) => {
   const data = await loadPlayerStats(req.params.number);
+  res.set("Access-Control-Allow-Origin", "*");
+  res.send(JSON.stringify(data));
+});
+
+app.get("/api/season/:number/predictions", async (req, res) => {
+  const data = await loadPredictionsStandings(req.params.number);
   res.set("Access-Control-Allow-Origin", "*");
   res.send(JSON.stringify(data));
 });

@@ -11,6 +11,7 @@ export default [
     route("schedule", "./season/schedule/schedule.tsx"),
     route("standings", "./season/standings/standings.tsx"),
     route("players", "./season/players/players.tsx"),
+    route("predictions", "./season/predictions/predictions.tsx"),
     route("draft", "./season/draft/draft.tsx"),
   ]),
 ] satisfies RouteConfig;
