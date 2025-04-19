@@ -251,7 +251,7 @@ type ScheduleData = {
 
 export async function loader({ params: { season } }: Route.LoaderArgs) {
   const rawData = (await (
-    await fetch(`http://localhost:3001/api/season/${season}/schedule`)
+    await fetch(`https://mushileague.gg/api/season/${season}/schedule`)
   ).json()) as ScheduleQuery;
 
   const regularWeeks = rawData.schedule[0].regular_weeks;
