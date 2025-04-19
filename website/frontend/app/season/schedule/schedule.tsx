@@ -8,7 +8,11 @@ export default function Schedule({ loaderData }: Route.ComponentProps) {
   return (
     <div className="flex flex-col gap-3">
       {loaderData.weeks.map((week, i) => (
-        <details open>
+        <details
+          {...(loaderData.currentWeek === null || loaderData.currentWeek <= i + 1
+            ? { open: true }
+            : {})}
+        >
           <summary>
             <h2 className="inline">
               {weekName(i + 1, loaderData.regularWeeks, loaderData.playoffSize)}
@@ -200,6 +204,8 @@ type ScheduleQuery = {
     weekNumber: number;
     matchupId: number;
     scheduled_datetime: number;
+    current_week: number;
+    seasonWinner: number;
   }[];
   missingLineups: { name: string; color: string; week: number }[];
 };
@@ -236,6 +242,7 @@ type MatchupData = {
 type ScheduleData = {
   regularWeeks: number;
   playoffSize: number;
+  currentWeek: number | null;
   weeks: {
     missingLineups: { name: string; color: string }[];
     matchups: MatchupData[];
@@ -244,7 +251,7 @@ type ScheduleData = {
 
 export async function loader({ params: { season } }: Route.LoaderArgs) {
   const rawData = (await (
-    await fetch(`https://mushileague.gg/api/season/${season}/schedule`)
+    await fetch(`http://localhost:3001/api/season/${season}/schedule`)
   ).json()) as ScheduleQuery;
 
   const regularWeeks = rawData.schedule[0].regular_weeks;
@@ -255,6 +262,9 @@ export async function loader({ params: { season } }: Route.LoaderArgs) {
   const initialAccum: ScheduleData = {
     regularWeeks: rawData.schedule[0].regular_weeks,
     playoffSize: rawData.schedule[0].playoff_size,
+    currentWeek: rawData.schedule[0].seasonWinner
+      ? null
+      : rawData.schedule[0].current_week,
     weeks: new Array(totalWeeks),
   };
 

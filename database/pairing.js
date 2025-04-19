@@ -137,7 +137,7 @@ export async function loadSchedule(season) {
     "SELECT leftPlayer.id AS leftPlayerId, leftPlayer.name AS leftPlayerName, leftTeam.id AS leftTeamId, leftTeam.name AS leftTeamName, leftTeam.color AS leftTeamColor, \
       rightPlayer.id AS rightPlayerId, rightPlayer.name AS rightPlayerName, rightTeam.id AS rightTeamId, rightTeam.name AS rightTeamName, rightTeam.color AS rightTeamColor, \
       pairing.winner, pairing.dead, pairing.game1, pairing.game2, pairing.game3, pairing.game4, pairing.game5, pairing.scheduled_datetime, \
-      week.number AS weekNumber, matchup.id AS matchupId, season.regular_weeks, season.playoff_size FROM season \
+      week.number AS weekNumber, matchup.id AS matchupId, season.regular_weeks, season.playoff_size, season.current_week, season.winner AS seasonWinner FROM season \
     INNER JOIN week ON week.season = season.number \
     LEFT JOIN matchup ON matchup.week = week.id \
     LEFT JOIN pairing ON pairing.matchup = matchup.id AND week.number <= season.current_week \
