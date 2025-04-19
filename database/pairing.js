@@ -217,7 +217,7 @@ export async function saveLineupSubmission(matchupId, side, lineup) {
 export async function saveScheduledTime(pairingId, date) {
   await db.run(
     "UPDATE pairing SET scheduled_datetime = ? WHERE id = ?",
-    date.valueOf(),
+    date?.valueOf() ?? null,
     pairingId
   );
 }
