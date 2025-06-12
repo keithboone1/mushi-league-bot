@@ -1,8 +1,55 @@
+import { useState, useMemo } from "react";
 import { NavLink } from "react-router";
 import type { Route } from "./+types/players";
 import { ArrowLeft } from "lucide-react";
 
+type SortOrder = "asc" | "desc";
+
 export default function Players({ loaderData }: Route.ComponentProps) {
+  const [sortKey, setSortKey] = useState<string>("wins");
+	const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
+
+	const sortedData = useMemo(() => {
+	  return [...loaderData].sort((a, b) => {
+		const aVal = a[sortKey];
+		const bVal = b[sortKey];
+
+		const isEmpty = (val: any) =>
+		  val === null || val === undefined || val === "";
+
+		if (isEmpty(aVal) && isEmpty(bVal)) return 0;
+		if (isEmpty(aVal)) return 1;
+		if (isEmpty(bVal)) return -1;
+
+		if (typeof aVal === "number" && typeof bVal === "number") {
+		  return sortOrder === "asc" ? aVal - bVal : bVal - aVal;
+		}
+
+		return sortOrder === "asc"
+		  ? String(aVal).localeCompare(String(bVal))
+		  : String(bVal).localeCompare(String(aVal));
+	  });
+	}, [loaderData, sortKey, sortOrder]);
+
+  const handleSort = (key: string) => {
+    if (sortKey === key) {
+      setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortOrder("asc");
+    }
+  };
+
+  const renderHeader = (label: string, key: string) => (
+    <th
+      className="px-2 cursor-pointer select-none hover:underline"
+      onClick={() => handleSort(key)}
+    >
+      {label}
+      {sortKey === key ? (sortOrder === "asc" ? " ↑" : " ↓") : ""}
+    </th>
+  );
+
   return (
     <>
       <NavLink to="/" className="inline-flex gap-1 items-center">
@@ -13,21 +60,21 @@ export default function Players({ loaderData }: Route.ComponentProps) {
       <table className="border border-collapse">
         <thead className="border">
           <tr>
-            <th className="px-2">Player</th>
-            <th className="px-2">Total Seasons</th>
-            <th className="px-2">Season Wins</th>
-            <th className="px-2">Most Recent Season</th>
-            <th className="px-2">Total Games</th>
-            <th className="px-2">Win Rate</th>
-            <th className="px-2">Total Wins</th>
-            <th className="px-2">Total Act W</th>
-            <th className="px-2">Total Losses</th>
-            <th className="px-2">Total Act L</th>
-            <th className="px-2">Total Ties</th>
+            {renderHeader("Player", "name")}
+            {renderHeader("Total Seasons", "total_seasons")}
+            {renderHeader("Season Wins", "season_wins")}
+            {renderHeader("Most Recent Season", "most_recent_season")}
+            {renderHeader("Total Games", "total_games")}
+            {renderHeader("Win Rate", "win_rate")}
+            {renderHeader("Total Wins", "wins")}
+            {renderHeader("Total Act W", "act_wins")}
+            {renderHeader("Total Losses", "losses")}
+            {renderHeader("Total Act L", "act_losses")}
+            {renderHeader("Total Ties", "ties")}
           </tr>
         </thead>
         <tbody>
-          {loaderData.map((player) => (
+          {sortedData.map((player) => (
             <tr key={player.id}>
               <td className="px-2 py-0.5 font-semibold underline">
                 <NavLink to={`/players/${player.id}`}>{player.name}</NavLink>
