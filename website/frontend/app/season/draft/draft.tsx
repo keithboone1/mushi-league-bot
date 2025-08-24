@@ -1,6 +1,7 @@
-import { teamColorText, teamInitials } from "~/util/util";
+import { teamColorText, teamInitials } from "util/util";
 import type { Route } from "./+types/draft";
 import { twJoin } from "tailwind-merge";
+import { NavLink } from "react-router";
 
 export default function Draft({ loaderData }: Route.ComponentProps) {
   const { captains, retains, picks } = loaderData;
@@ -11,13 +12,16 @@ export default function Draft({ loaderData }: Route.ComponentProps) {
 
   return (
     <>
-      <table className="border border-collapse table-fixed w-full mb-8">
+      <table
+        className="border border-collapse table-fixed w-full mb-8"
+        style={{ minWidth: 80 + 140 * picks[0].length }}
+      >
         <tbody>
           {new Array(mostCaptains).fill(" ").map((_, i) => (
             <tr key={`Captains ${i}`} className="border">
               <td className="border w-20 p-1">Captains</td>
               {captains.map((captain, j) => (
-                <td className="border" key={j}>
+                <td className="border min-w-24" key={j}>
                   {captain[i] && (
                     <>
                       <div
@@ -31,7 +35,12 @@ export default function Draft({ loaderData }: Route.ComponentProps) {
                       </div>
                       <div className="text-sm p-1 flex gap-1 justify-between">
                         <div className="whitespace-nowrap overflow-hidden text-ellipsis min-w-0">
-                          {captain[i].player?.name}
+                          <NavLink
+                            to={`/players/${captain[i].player?.id}`}
+                            className="underline"
+                          >
+                            {captain[i].player?.name}
+                          </NavLink>
                         </div>
                         <div className="shrink-0 font-semibold">
                           {captain[i].player?.stars}
@@ -45,13 +54,16 @@ export default function Draft({ loaderData }: Route.ComponentProps) {
           ))}
         </tbody>
       </table>
-      <table className="border border-collapse table-fixed w-full mb-8">
+      <table
+        className="border border-collapse table-fixed w-full mb-8"
+        style={{ minWidth: 80 + 140 * picks[0].length }}
+      >
         <tbody>
           {new Array(mostRetains).fill(" ").map((_, i) => (
             <tr key={`Retains ${i}`} className="border">
               <td className="border w-20 p-1">Retains</td>
               {retains.map((retain, j) => (
-                <td className="border" key={j}>
+                <td className="border min-w-24" key={j}>
                   {retain[i] && (
                     <>
                       <div
@@ -65,7 +77,12 @@ export default function Draft({ loaderData }: Route.ComponentProps) {
                       </div>
                       <div className="text-sm p-1 flex gap-1 justify-between">
                         <div className="whitespace-nowrap overflow-hidden text-ellipsis min-w-0">
-                          {retain[i].player?.name}
+                          <NavLink
+                            to={`/players/${retain[i].player?.id}`}
+                            className="underline"
+                          >
+                            {retain[i].player?.name}
+                          </NavLink>
                         </div>
                         <div className="shrink-0 font-semibold">
                           {retain[i].player?.stars}
@@ -79,9 +96,12 @@ export default function Draft({ loaderData }: Route.ComponentProps) {
           ))}
         </tbody>
       </table>
-      <table className="border border-collapse table-fixed w-full">
+      <table
+        className="border border-collapse w-full table-fixed"
+        style={{ minWidth: 80 + 140 * picks[0].length }}
+      >
         <tbody>
-          {loaderData.picks.map((round, i) => (
+          {picks.map((round, i) => (
             <tr key={`picks ${i}`} className="border">
               <td className="border w-20 p-1">Round {i + 1}</td>
               {round.map((pick, i) => (
@@ -99,7 +119,12 @@ export default function Draft({ loaderData }: Route.ComponentProps) {
                       </div>
                       <div className="text-sm p-1 flex gap-1 justify-between">
                         <div className="whitespace-nowrap overflow-hidden text-ellipsis min-w-0">
-                          {pick.player?.name ?? "​"}
+                          <NavLink
+                            to={`/players/${pick.player?.id}`}
+                            className="underline"
+                          >
+                            {pick.player?.name ?? "​"}
+                          </NavLink>
                         </div>
                         <div className="shrink-0 font-semibold">
                           {pick.player?.stars}

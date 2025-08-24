@@ -1,3 +1,4 @@
+import e from "cors";
 import { db } from "./database.js";
 
 export async function loadCurrentSeason() {
@@ -57,4 +58,8 @@ export async function saveSeasonNumbers(
     minLineup,
     season
   );
+}
+
+export async function saveWinner(season, teamId) {
+  await db.run("UPDATE season SET winner = ? WHERE number = ?", teamId, season);
 }

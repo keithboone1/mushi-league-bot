@@ -2,7 +2,7 @@ import { NavLink, Outlet, useLocation } from "react-router";
 import { twMerge } from "tailwind-merge";
 import { ArrowLeft } from "lucide-react";
 import type { Route } from "./+types/season";
-import { teamInitials } from "~/util/util";
+import { teamInitials } from "util/util";
 
 type TeamQuery = {
   id: number;
@@ -74,6 +74,17 @@ export default function Season({
           )}
         >
           Player Records
+        </NavLink>
+        <NavLink
+          to={`/season/${season}/predictions`}
+          className={twMerge(
+            "px-3 py-1 border-b-4 border-gray-400 font-semibold grow-2 text-center",
+            pathname === `/season/${season}/predictions`
+              ? "bg-gray-200"
+              : "bg-gray-50 hover:bg-gray-100"
+          )}
+        >
+          Predictions
         </NavLink>
         <NavLink
           to={`/season/${season}/draft`}

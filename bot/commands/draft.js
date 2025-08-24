@@ -152,7 +152,7 @@ async function listPlayers(interaction) {
           await maxStarsNext(
             submitter.teamId,
             (
-              await loadNextPickRoundForTeam(submitter.teamId)
+              await loadNextPickRoundForTeam(submitter.teamId, currentSeason.number)
             ).round
           )
         );

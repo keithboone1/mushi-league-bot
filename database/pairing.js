@@ -1,4 +1,5 @@
 import { db } from "./database.js";
+import { loadMatchupsMissingLineups } from "./matchup.js";
 
 export async function loadAllPairings(season, week) {
   const query =
@@ -135,11 +136,11 @@ export async function loadSchedule(season) {
   const query =
     "SELECT leftPlayer.id AS leftPlayerId, leftPlayer.name AS leftPlayerName, leftTeam.id AS leftTeamId, leftTeam.name AS leftTeamName, leftTeam.color AS leftTeamColor, \
       rightPlayer.id AS rightPlayerId, rightPlayer.name AS rightPlayerName, rightTeam.id AS rightTeamId, rightTeam.name AS rightTeamName, rightTeam.color AS rightTeamColor, \
-      pairing.winner, pairing.dead, pairing.game1, pairing.game2, pairing.game3, pairing.game4, pairing.game5, \
-      week.number AS weekNumber, matchup.id AS matchupId, season.regular_weeks, season.playoff_size FROM season \
+      pairing.winner, pairing.dead, pairing.game1, pairing.game2, pairing.game3, pairing.game4, pairing.game5, pairing.scheduled_datetime, \
+      week.number AS weekNumber, matchup.id AS matchupId, season.regular_weeks, season.playoff_size, season.current_week, season.winner AS seasonWinner FROM season \
     INNER JOIN week ON week.season = season.number \
     LEFT JOIN matchup ON matchup.week = week.id \
-    LEFT JOIN pairing ON pairing.matchup = matchup.id \
+    LEFT JOIN pairing ON pairing.matchup = matchup.id AND week.number <= season.current_week \
     LEFT JOIN team AS leftTeam ON matchup.left_team = leftTeam.id \
     LEFT JOIN team AS rightTeam ON matchup.right_team = rightTeam.id \
     LEFT JOIN player AS leftPlayer ON pairing.left_player = leftPlayer.id \
@@ -147,7 +148,12 @@ export async function loadSchedule(season) {
     WHERE season.number = ? \
     ORDER BY week.number ASC, matchup.room ASC, pairing.slot ASC";
 
-  return await db.all(query, season);
+  const [schedule, missingLineups] = await Promise.all([
+    db.all(query, season),
+    loadMatchupsMissingLineups(season),
+  ]);
+
+  return { schedule: schedule, missingLineups: missingLineups };
 }
 
 export async function savePairingResult(pairingId, games, winner, dead) {
@@ -211,7 +217,7 @@ export async function saveLineupSubmission(matchupId, side, lineup) {
 export async function saveScheduledTime(pairingId, date) {
   await db.run(
     "UPDATE pairing SET scheduled_datetime = ? WHERE id = ?",
-    date.valueOf(),
+    date?.valueOf() ?? null,
     pairingId
   );
 }

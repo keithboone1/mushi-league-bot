@@ -196,9 +196,6 @@ export const MATCH_COMMAND = {
       case "schedule":
         await scheduleMatch(interaction);
         break;
-      case "start":
-        await startMatch(interaction);
-        break;
       case "link":
         await linkMatch(interaction);
         break;

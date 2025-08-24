@@ -1,5 +1,6 @@
 import { twMerge } from "tailwind-merge";
 import type { Route } from "./+types/team";
+import { NavLink } from "react-router";
 
 export default function Team({ loaderData }: Route.ComponentProps) {
   const leadershipTeam = loaderData.players.filter((p) => p.role !== "Player");
@@ -11,7 +12,10 @@ export default function Team({ loaderData }: Route.ComponentProps) {
       <h2>{loaderData.name}</h2>
       {leadershipTeam.map((l) => (
         <div key={l.id}>
-          <span className="font-bold">{l.role}</span> {l.name}
+          <span className="font-bold">{l.role}</span>{" "}
+          <NavLink to={`/players/${l.id}`} className="underline">
+            {l.name}
+          </NavLink>
         </div>
       ))}
       <table className="border border-collapse text-center">
@@ -37,7 +41,9 @@ export default function Team({ loaderData }: Route.ComponentProps) {
                   player.role === "Captain" && "font-bold"
                 )}
               >
-                {player.name}
+                <NavLink to={`/players/${player.id}`} className="underline">
+                  {player.name}
+                </NavLink>
               </td>
               <td>
                 {player.wins +

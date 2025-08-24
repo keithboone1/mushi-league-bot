@@ -37,7 +37,7 @@ export async function savePlayerChange(
   }, role = ${role ?? null}, active = ${active} WHERE id = ${id};`;
   if (team != null) {
     const isDraftNotStartedYetSubquery = `SELECT count(id) = 0 FROM draft WHERE season = ${season}`;
-    updatePlayerQuery += `INSERT INTO roster (season, player, team, role, retained) VALUES (${season}, ${id}, ${team}, ${role}, ${isDraftNotStartedYetSubquery}) ON CONFLICT DO UPDATE SET team = ${team}, role = ${role};`;
+    updatePlayerQuery += `INSERT INTO roster (season, player, team, role, retained) VALUES (${season}, ${id}, ${team}, ${role}, (${isDraftNotStartedYetSubquery})) ON CONFLICT DO UPDATE SET team = ${team}, role = ${role};`;
   }
   if (role === 1 || role === 2) {
     updatePlayerQuery += `INSERT INTO pstat (player, season, stars) VALUES (${id}, ${season}, ${stars}) ON CONFLICT DO UPDATE SET stars = ${stars};`;
@@ -159,4 +159,51 @@ export async function getSeasonSize() {
     "SELECT count(id) AS playerCount, sum(stars) AS starCount FROM player WHERE active = 1 AND role IS NULL OR role != 3";
 
   return await db.get(query);
+}
+
+export async function loadPlayerHistory(playerId) {
+  const playerInfoQuery =
+    "SELECT player.name AS playerName, roster.season, role.name AS roleName, pstat.stars, pstat.wins, pstat.act_wins, pstat.losses, pstat.act_losses, pstat.ties, pstat.star_points, team.id AS teamId, team.name AS teamName, team.color \
+     FROM player \
+     INNER JOIN roster ON roster.player = player.id \
+     LEFT JOIN pstat ON pstat.player = player.id AND pstat.season = roster.season \
+     INNER JOIN team ON team.id = roster.team \
+     INNER JOIN role ON role.id = roster.role \
+     WHERE player.id = ? \
+     ORDER BY roster.season DESC";
+
+  const pairingQuery =
+    "SELECT slot, game1, game2, game3, game4, game5, pairing.winner, dead, week.season, week.number as weekNumber, season.regular_weeks, season.playoff_size, opponent.id AS opponentId, opponent.name AS opponentName, opponentPstat.stars AS opponentStars, opponentTeam.name AS opponentTeam, opponentTeam.color AS opponentTeamColor \
+     FROM pairing \
+     INNER JOIN matchup ON pairing.matchup = matchup.id \
+     INNER JOIN week ON matchup.week = week.id \
+     INNER JOIN season ON season.number = week.season \
+     INNER JOIN player AS opponent ON opponent.id = IIF(pairing.left_player = ?, pairing.right_player, pairing.left_player) \
+     INNER JOIN pstat AS opponentPstat ON opponentPstat.player = opponent.id AND opponentPstat.season = week.season \
+     INNER JOIN team AS opponentTeam ON opponentTeam.id = IIF(pairing.left_player = ?, matchup.right_team, matchup.left_team) \
+     WHERE pairing.left_player = ? OR pairing.right_player = ? \
+     ORDER BY week.season DESC, week.number DESC";
+
+  const [playerInfo, pairings] = await Promise.all([
+    db.all(playerInfoQuery, playerId),
+    db.all(pairingQuery, playerId, playerId, playerId, playerId),
+  ]);
+
+  return { playerInfo, pairings };
+}
+
+export async function loadAllPlayersEver() {
+  const query =
+    "SELECT player.id, player.name, MAX(roster.season) as most_recent_season, COUNT(season.number) as season_wins, COUNT(roster.player) AS total_seasons,\
+     SUM(pstat.wins + pstat.act_wins + pstat.losses + pstat.act_losses + pstat.ties) AS total_games, \
+     ROUND(SUM(pstat.wins + pstat.act_wins * 1.0) / SUM (pstat.wins + pstat.act_wins + pstat.losses + pstat.act_losses), 3) AS win_rate,\
+     SUM(pstat.wins) as wins, SUM(pstat.act_wins) as act_wins, SUM(pstat.losses) as losses, SUM(pstat.act_losses) as act_losses, SUM(pstat.ties) AS ties\
+     FROM player\
+     INNER JOIN roster ON roster.player = player.id \
+     LEFT JOIN pstat ON pstat.player = player.id AND roster.season = pstat.season\
+  	 LEFT JOIN season ON season.winner = roster.team AND season.number = roster.season\
+     GROUP BY player.id\
+     ORDER BY SUM(wins + act_wins) DESC, total_seasons DESC, total_games DESC, most_recent_season DESC";
+
+  return await db.all(query);
 }
