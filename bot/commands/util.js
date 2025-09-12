@@ -125,7 +125,7 @@ export function fixFloat(float) {
 }
 
 export function userIsOwner(user) {
-    return user.permissions.has(PermissionFlagsBits.ManageGuild);
+    return user.roles.cache.has(process.env.ownerRoleId);
 }
 
 export function userIsMod(user) {
