@@ -50,6 +50,7 @@ async function getPredictionsMessage(predictionsMessageId) {
 
 export async function savePredictions(pairingId, leftPlayer, leftEmoji, rightPlayer, rightEmoji, predictionsMessageId) {
     const predictionsMessage = await getPredictionsMessage(predictionsMessageId);
+    if (!predictionsMessage) return;
 
     const predictions = await mapReactionsToPlayers(leftPlayer, leftEmoji, rightPlayer, rightEmoji, predictionsMessage.reactions.cache);
     await savePredictionsToDatabase(pairingId, predictions, leftPlayer, rightPlayer);
@@ -88,6 +89,8 @@ export async function updatePrediction(pairingPredictionsMessageId, matchupPredi
 
 async function updatePairingPrediction(pairingPredictionsMessageId, act, dead, winnerOnLeft) {
     const pairingPredictionsMessage = await getPredictionsMessage(pairingPredictionsMessageId);
+    if (!pairingPredictionsMessage) return;
+    
     let predictionContent = pairingPredictionsMessage.content;
 
     if (dead) {
