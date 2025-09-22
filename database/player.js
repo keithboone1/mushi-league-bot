@@ -181,7 +181,8 @@ export async function loadPlayerHistory(playerId) {
      INNER JOIN player AS opponent ON opponent.id = IIF(pairing.left_player = ?, pairing.right_player, pairing.left_player) \
      INNER JOIN pstat AS opponentPstat ON opponentPstat.player = opponent.id AND opponentPstat.season = week.season \
      INNER JOIN team AS opponentTeam ON opponentTeam.id = IIF(pairing.left_player = ?, matchup.right_team, matchup.left_team) \
-     WHERE pairing.left_player = ? OR pairing.right_player = ? \
+     WHERE (pairing.left_player = ? OR pairing.right_player = ?) \
+       AND (season.number < (SELECT number FROM season ORDER BY number DESC LIMIT 1) OR week.number <= (SELECT current_week FROM season ORDER BY number DESC LIMIT 1)) \
      ORDER BY week.season DESC, week.number DESC";
 
   const [playerInfo, pairings] = await Promise.all([
