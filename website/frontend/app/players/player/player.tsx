@@ -102,6 +102,7 @@ export default function Season({
                   <a
                     className="basis-full grow text-center text-sm text-[blue] active:text-[purple] underline whitespace-nowrap"
                     href={game}
+                    target="_blank"
                   >{`game ${i + 1}`}</a>
                 </span>
               ) : (

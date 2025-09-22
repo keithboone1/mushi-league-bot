@@ -6,7 +6,7 @@ import { ArrowLeft } from "lucide-react";
 type SortOrder = "asc" | "desc";
 
 export default function Players({ loaderData }: Route.ComponentProps) {
-  const [sortKey, setSortKey] = useState<string>("wins");
+  const [sortKey, setSortKey] = useState<keyof PlayersQuery[number]>("wins");
 	const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
 
 	const sortedData = useMemo(() => {
@@ -31,7 +31,7 @@ export default function Players({ loaderData }: Route.ComponentProps) {
 	  });
 	}, [loaderData, sortKey, sortOrder]);
 
-  const handleSort = (key: string) => {
+  const handleSort = (key: keyof PlayersQuery[number]) => {
     if (sortKey === key) {
       setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
     } else {
@@ -40,7 +40,7 @@ export default function Players({ loaderData }: Route.ComponentProps) {
     }
   };
 
-  const renderHeader = (label: string, key: string) => (
+  const renderHeader = (label: string, key: keyof PlayersQuery[number]) => (
     <th
       className="px-2 cursor-pointer select-none hover:underline"
       onClick={() => handleSort(key)}
