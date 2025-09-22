@@ -39,7 +39,7 @@ export default function Draft({ loaderData }: Route.ComponentProps) {
                 <div className="text-sm p-1 flex gap-1 justify-between">
                   <div className="whitespace-nowrap overflow-hidden text-ellipsis min-w-0">Max stars next</div>
                   <div className="shrink-0 font-semibold">
-                    {team.maxStarsNext}
+                    {team.maxStarsNext.toFixed(2)}
                   </div>
                 </div>
                 <div className="text-sm p-1 flex gap-1 justify-between">
@@ -331,7 +331,7 @@ export async function loader({ params: { season } }: Route.LoaderArgs) {
       .concat(rawData.retains, rawData.captains)
       .reduce(
         (accum, pick) =>
-          pick.teamId === team.id
+          pick.teamId === team.id && pick.playerId !== null
             ? {
                 totalPlayers: accum.totalPlayers + 1,
                 totalStars: accum.totalStars + pick.stars,
