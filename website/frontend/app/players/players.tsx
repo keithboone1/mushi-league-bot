@@ -61,6 +61,7 @@ export default function Players({ loaderData }: Route.ComponentProps) {
         <thead className="border">
           <tr>
             {renderHeader("Player", "name")}
+            {renderHeader("Current stars", "stars")}
             {renderHeader("Total Seasons", "total_seasons")}
             {renderHeader("Season Wins", "season_wins")}
             {renderHeader("Most Recent Season", "most_recent_season")}
@@ -79,6 +80,7 @@ export default function Players({ loaderData }: Route.ComponentProps) {
               <td className="px-2 py-0.5 font-semibold underline">
                 <NavLink to={`/players/${player.id}`}>{player.name}</NavLink>
               </td>
+              <td className="px-2 text-center">{player.stars}</td>
               <td className="px-2 text-center">{player.total_seasons}</td>
               <td className="px-2 text-center">{player.season_wins}</td>
               <td className="px-2 text-center">{player.most_recent_season}</td>
@@ -102,6 +104,7 @@ export default function Players({ loaderData }: Route.ComponentProps) {
 type PlayersQuery = {
   id: number;
   name: string;
+  stars: string;
   most_recent_season: number;
   total_seasons: number;
   season_wins: number;

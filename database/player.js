@@ -195,7 +195,7 @@ export async function loadPlayerHistory(playerId) {
 
 export async function loadAllPlayersEver() {
   const query =
-    "SELECT player.id, player.name, MAX(roster.season) as most_recent_season, COUNT(season.number) as season_wins, COUNT(roster.player) AS total_seasons,\
+    "SELECT player.id, player.name, player.stars, MAX(roster.season) as most_recent_season, COUNT(season.number) as season_wins, COUNT(roster.player) AS total_seasons,\
      SUM(pstat.wins + pstat.act_wins + pstat.losses + pstat.act_losses + pstat.ties) AS total_games, \
      ROUND(SUM(pstat.wins + pstat.act_wins * 1.0) / SUM (pstat.wins + pstat.act_wins + pstat.losses + pstat.act_losses), 3) AS win_rate,\
      SUM(pstat.wins) as wins, SUM(pstat.act_wins) as act_wins, SUM(pstat.losses) as losses, SUM(pstat.act_losses) as act_losses, SUM(pstat.ties) AS ties\
