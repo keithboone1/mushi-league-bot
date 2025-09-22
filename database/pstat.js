@@ -6,10 +6,10 @@ export async function loadPlayerStats(season) {
     "SELECT player.id, player.name, (pstat.wins + pstat.act_wins - pstat.losses - pstat.act_losses) AS differential, \
      pstat.wins, pstat.act_wins, pstat.losses, pstat.act_losses, pstat.ties, pstat.star_points, pstat.stars \
      FROM pstat \
-     INNER JOIN player ON player.id = pstat.player \
-     WHERE pstat.season = ? \
+     LEFT JOIN player ON (player.id = pstat.player AND pstat.season = ?) \
+     WHERE pstat.season = ? OR player.active = 1 \
      ORDER BY differential DESC, pstat.star_points DESC, pstat.stars DESC";
-  return await db.all(query, season);
+  return await db.all(query, season, season);
 }
 
 export async function savePlayerStatUpdate(season, pairing) {
