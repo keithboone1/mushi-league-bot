@@ -70,7 +70,7 @@ export default function Season({
               style={{ backgroundColor: season.color }}
             >
               {season.teamName}
-            </span> ({season.stars} stars)
+            </span> ({season.stars.toFixed(2)} stars)
           </div>
           {season.pairings?.map((pairing) => {
             const result = pairing.dead
