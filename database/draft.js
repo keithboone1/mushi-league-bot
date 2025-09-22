@@ -48,7 +48,7 @@ export async function loadDraft(season) {
   const picks = await db.all(picksQuery, season);
   const retains = await db.all(retainsQuery, season);
   const captains = await db.all(captainsQuery, season);
-  const seasonData = await db.run(seasonQuery, season);
+  const seasonData = await db.get(seasonQuery, season);
 
   return { season: seasonData, captains, retains, picks };
 }

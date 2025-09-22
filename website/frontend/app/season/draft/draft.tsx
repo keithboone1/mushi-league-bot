@@ -49,7 +49,7 @@ export default function Draft({ loaderData }: Route.ComponentProps) {
                   </div>
                 </div>
                 <div className="text-sm p-1 flex gap-1 justify-between">
-                  <div className="whitespace-nowrap overflow-hidden text-ellipsis min-w-0">Min. picks remaining</div>
+                  <div className="whitespace-nowrap overflow-hidden text-ellipsis min-w-0">Min. picks left</div>
                   <div className="shrink-0 font-semibold">
                     {team.remainingPicksForMinRoster}
                   </div>
