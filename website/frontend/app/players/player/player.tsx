@@ -70,7 +70,7 @@ export default function Season({
               style={{ backgroundColor: season.color }}
             >
               {season.teamName}
-            </span>
+            </span> ({season.stars.toFixed(2)} stars)
           </div>
           {season.pairings?.map((pairing) => {
             const result = pairing.dead
@@ -102,6 +102,7 @@ export default function Season({
                   <a
                     className="basis-full grow text-center text-sm text-[blue] active:text-[purple] underline whitespace-nowrap"
                     href={game}
+                    target="_blank"
                   >{`game ${i + 1}`}</a>
                 </span>
               ) : (

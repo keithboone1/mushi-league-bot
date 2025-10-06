@@ -43,11 +43,14 @@ export async function loadDraft(season) {
      WHERE roster.season = ? AND roster.role = 1 AND roster.retained = 1 \
      ORDER BY pstat.stars DESC";
 
+  const seasonQuery = "SELECT min_roster, max_roster, max_stars, r1_stars FROM season WHERE number = ?"
+
   const picks = await db.all(picksQuery, season);
   const retains = await db.all(retainsQuery, season);
   const captains = await db.all(captainsQuery, season);
+  const seasonData = await db.get(seasonQuery, season);
 
-  return { captains, retains, picks };
+  return { season: seasonData, captains, retains, picks };
 }
 
 export async function saveDraftSetup(

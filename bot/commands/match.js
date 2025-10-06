@@ -517,6 +517,12 @@ async function reportMatch(interaction) {
       );
     }
 
+    for (let i = 0; i < games.length; i++) {
+      if (games[i].startsWith("http") && games.some((game, j) => j !== i && game === games[i])) {
+        failures.push("You seem to have linked the same game multiple times.")
+      }
+    }
+
     if (games.some((game) => game.search("battle") !== -1)) {
       failures.push(
         "You seem to have given live game links instead of replay links."
@@ -643,9 +649,8 @@ async function awardActWin(interaction) {
     const confirmLabel = "Confirm activity win";
     const confirmMessage = `${userMention(
       winnerSnowflake
-    )} granted win over ${userMention(loserSnowflake)} in slot ${
-      pairing.slot
-    }.`;
+    )} granted win over ${userMention(loserSnowflake)} in slot ${pairing.slot
+      }.`;
     const cancelMessage = "No activity win granted.";
 
     return [failures, prompts, confirmLabel, confirmMessage, cancelMessage];
@@ -725,9 +730,8 @@ async function markDeadGame(interaction) {
     const confirmLabel = "Confirm dead game";
     const confirmMessage = `${userMention(
       pairing.leftPlayerSnowflake
-    )} vs ${userMention(pairing.rightPlayerSnowflake)} declared dead in slot ${
-      pairing.slot
-    }.`;
+    )} vs ${userMention(pairing.rightPlayerSnowflake)} declared dead in slot ${pairing.slot
+      }.`;
     const cancelMessage = "Game not marked dead.";
 
     return [failures, prompts, confirmLabel, confirmMessage, cancelMessage];
@@ -782,9 +786,8 @@ async function postReport(pairing, winnerOnLeft, extension, games, act, dead) {
 }
 
 function makeReportPlaintext(pairing, winnerOnLeft, extension, act, dead) {
-  const leftPlayerText = `(${roleMention(pairing.leftTeamSnowflake)}) ${
-    pairing.leftPlayerName
-  }`;
+  const leftPlayerText = `(${roleMention(pairing.leftTeamSnowflake)}) ${pairing.leftPlayerName
+    }`;
   const rightPlayerText = `${pairing.rightPlayerName} (${roleMention(
     pairing.rightTeamSnowflake
   )})`;
@@ -821,9 +824,8 @@ function makeReplayEmbed(pairing, winnerOnLeft, extension, games) {
     });
   }
 
-  const leftPlayerText = `(${roleMention(pairing.leftTeamSnowflake)}) ${
-    pairing.leftPlayerName
-  }`;
+  const leftPlayerText = `(${roleMention(pairing.leftTeamSnowflake)}) ${pairing.leftPlayerName
+    }`;
   const rightPlayerText = `${pairing.rightPlayerName} (${roleMention(
     pairing.rightTeamSnowflake
   )})`;
@@ -833,8 +835,8 @@ function makeReplayEmbed(pairing, winnerOnLeft, extension, games) {
         ? "\u{0032}\u{FE0F}\u{20E3} > \u{0030}\u{FE0F}\u{20E3}"
         : "\u{0030}\u{FE0F}\u{20E3} < \u{0032}\u{FE0F}\u{20E3}"
       : winnerOnLeft
-      ? "\u{0032}\u{FE0F}\u{20E3} > \u{0031}\u{FE0F}\u{20E3}"
-      : "\u{0031}\u{FE0F}\u{20E3} < \u{0032}\u{FE0F}\u{20E3}";
+        ? "\u{0032}\u{FE0F}\u{20E3} > \u{0031}\u{FE0F}\u{20E3}"
+        : "\u{0031}\u{FE0F}\u{20E3} < \u{0032}\u{FE0F}\u{20E3}";
   const extensionMessage = extension
     ? italic("\n(Extension from last week)")
     : "";
@@ -957,7 +959,7 @@ async function nextMatches(interaction) {
     return { upcomingMatches };
   }
 
-  function verifier(data) {}
+  function verifier(data) { }
 
   function responseWriter(data) {
     const { upcomingMatches } = data;
@@ -972,8 +974,7 @@ async function nextMatches(interaction) {
           (match) =>
             `${time(new Date(match.scheduled_datetime))}: ${roleMention(
               match.leftTeamSnowflake
-            )} ${match.leftPlayerName} vs ${
-              match.rightPlayerName
+            )} ${match.leftPlayerName} vs ${match.rightPlayerName
             } ${roleMention(match.rightTeamSnowflake)}`
         )
         .join("\n")

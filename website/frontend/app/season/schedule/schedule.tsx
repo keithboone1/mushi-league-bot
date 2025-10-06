@@ -108,6 +108,7 @@ export default function Schedule({ loaderData }: Route.ComponentProps) {
                                 <a
                                   className="basis-full grow text-center text-sm text-[blue] active:text-[purple] underline"
                                   href={game}
+                                  target="_blank"
                                 >{`g${i + 1}`}</a>
                               </div>
                             ) : (
