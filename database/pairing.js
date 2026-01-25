@@ -35,7 +35,7 @@ export async function loadOpenPairings(season, week) {
 export async function loadPairingsForMatchup(matchupId) {
   return await db.all(
     "SELECT id FROM pairing WHERE matchup = ? ORDER BY slot ASC",
-    matchupId
+    matchupId,
   );
 }
 
@@ -46,16 +46,18 @@ export async function loadOnePairing(season, week, playerSnowflake) {
                 leftPlayer.id AS leftPlayerId, leftPlayer.discord_snowflake AS leftPlayerSnowflake, leftPlayer.name AS leftPlayerName, leftTeam.discord_snowflake AS leftTeamSnowflake, leftTeam.emoji AS leftEmoji, \
                 rightPlayer.id AS rightPlayerId, rightPlayer.discord_snowflake AS rightPlayerSnowflake, rightPlayer.name AS rightPlayerName, rightTeam.discord_snowflake AS rightTeamSnowflake, rightTeam.emoji AS rightEmoji FROM pairing \
          INNER JOIN player AS leftPlayer ON leftPlayer.id = pairing.left_player \
-         INNER JOIN team AS leftTeam ON leftTeam.id = leftPlayer.team \
+         INNER JOIN roster AS leftRoster ON leftRoster.player = leftPlayer.id AND leftRoster.season = ? \
+         INNER JOIN team AS leftTeam ON leftTeam.id = leftRoster.team \
          INNER JOIN player AS rightPlayer ON rightPlayer.id = pairing.right_player \
-         INNER JOIN team AS rightTeam ON rightTeam.id = rightPlayer.team \
+         INNER JOIN roster AS rightRoster ON rightRoster.player = rightPlayer.id AND rightRoster.season = ? \
+         INNER JOIN team AS rightTeam ON rightTeam.id = rightRoster.team \
          INNER JOIN matchup ON matchup.id = pairing.matchup \
          INNER JOIN week ON week.id = matchup.week \
          LEFT JOIN (SELECT DISTINCT pairing FROM prediction) AS predictedPairings ON pairing.id = predictedPairings.pairing \
          WHERE (rightPlayer.discord_snowflake = ? OR leftPlayer.discord_snowflake = ?) \
              AND week.number = ? AND week.season = ?";
 
-  return await db.get(query, playerSnowflake, playerSnowflake, week, season);
+  return await db.get(query, season, season, playerSnowflake, playerSnowflake, week, season);
 }
 
 export async function loadAllPairingResults(season, week) {
@@ -87,7 +89,7 @@ export async function loadReplays(startSeason, endSeason, playerSnowflake) {
     startSeason,
     endSeason,
     playerSnowflake,
-    playerSnowflake
+    playerSnowflake,
   );
 }
 
@@ -115,7 +117,7 @@ export async function loadOneLineup(season, week, requesterSnowflake) {
     week,
     requesterSnowflake,
     season,
-    week
+    week,
   );
 }
 
@@ -166,7 +168,7 @@ export async function savePairingResult(pairingId, games, winner, dead) {
     games?.at(4),
     winner,
     dead,
-    pairingId
+    pairingId,
   );
 }
 
@@ -174,7 +176,7 @@ export async function savePredictionsMessageId(table, messageId, primaryKey) {
   await db.run(
     `UPDATE ${table} SET predictions_message = ? WHERE id = ?`,
     messageId,
-    primaryKey
+    primaryKey,
   );
 }
 
@@ -187,7 +189,7 @@ export async function saveSubstitution(matchupId, slot, side, newPlayerId) {
     `UPDATE pairing SET ${side}_player = ? WHERE matchup = ? AND slot = ?`,
     newPlayerId,
     matchupId,
-    slot
+    slot,
   );
 }
 
@@ -199,15 +201,16 @@ export async function saveLineupSubmission(matchupId, side, lineup) {
       await db.run(
         `UPDATE pairing SET ${side}_player = ? WHERE id = ?`,
         lineup[index].id ?? 4,
-        pairings[index].id
+        pairings[index].id,
       );
     }
   } else {
     const query =
       `INSERT INTO pairing (matchup, slot, ${side}_player) VALUES`.concat(
         lineup.map(
-          (player, index) => `\n(${matchupId}, ${index + 1}, ${player.id ?? 4})`
-        )
+          (player, index) =>
+            `\n(${matchupId}, ${index + 1}, ${player.id ?? 4})`,
+        ),
       );
 
     await db.run(query);
@@ -218,6 +221,6 @@ export async function saveScheduledTime(pairingId, date) {
   await db.run(
     "UPDATE pairing SET scheduled_datetime = ? WHERE id = ?",
     date?.valueOf() ?? null,
-    pairingId
+    pairingId,
   );
 }

@@ -3,14 +3,21 @@ import { db } from "./database.js";
 export async function saveInitialStandings(season) {
   await db.run(
     "INSERT INTO standing (season, team) SELECT ?, id FROM team WHERE active = 1",
-    season
+    season,
+  );
+}
+
+export async function saveBackfillStandings(season, teamSnowflakes) {
+  await db.run(
+    `INSERT INTO standing (season, team) SELECT ?, id FROM team WHERE team.discord_snowflake in (${teamSnowflakes.join(", ")})`,
+    season,
   );
 }
 
 export async function loadStandingWeeksSoFar(season) {
   return await db.get(
     "SELECT wins + losses + ties AS standingsWeeks FROM standing WHERE season = ? LIMIT 1",
-    season
+    season,
   );
 }
 
@@ -50,40 +57,40 @@ export async function saveStandingsUpdate(
   season,
   differential,
   leftTeamId,
-  rightTeamId
+  rightTeamId,
 ) {
   if (differential > 0) {
     await db.run(
       "UPDATE standing SET wins = wins + 1, points = points + 3, battle_differential = battle_differential + ? WHERE season = ? AND team = ?",
       differential,
       season,
-      leftTeamId
+      leftTeamId,
     );
     await db.run(
       "UPDATE standing SET losses = losses + 1, battle_differential = battle_differential - ? WHERE season = ? AND team = ?",
       differential,
       season,
-      rightTeamId
+      rightTeamId,
     );
   } else if (differential < 0) {
     await db.run(
       "UPDATE standing SET losses = losses + 1, battle_differential = battle_differential + ? WHERE season = ? AND team = ?",
       differential,
       season,
-      leftTeamId
+      leftTeamId,
     );
     await db.run(
       "UPDATE standing SET wins = wins + 1, points = points + 3, battle_differential = battle_differential - ? WHERE season = ? AND team = ?",
       differential,
       season,
-      rightTeamId
+      rightTeamId,
     );
   } else {
     await db.run(
       "UPDATE standing SET ties = ties + 1, points = points + 1 WHERE season = ? AND (team = ? OR team = ?)",
       season,
       leftTeamId,
-      rightTeamId
+      rightTeamId,
     );
   }
 }

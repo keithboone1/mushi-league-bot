@@ -83,15 +83,7 @@ export async function loadMatchupForTeam(season, week, teamSnowflake) {
          INNER JOIN team ON (matchup.left_team = team.id OR matchup.right_team = team.id) \
          WHERE week.season = ? AND week.number = ? AND team.discord_snowflake = ?";
 
-  return await db.get(
-    query,
-    season,
-    week,
-    teamSnowflake,
-    season,
-    week,
-    teamSnowflake,
-  );
+  return await db.get(query, season, week, teamSnowflake);
 }
 
 export async function loadExistingPairingForMatchup(matchupId, teamId) {
@@ -100,7 +92,7 @@ export async function loadExistingPairingForMatchup(matchupId, teamId) {
       inner join matchup on pairing.matchup = matchup.id \
       where slot = 1 and matchup.id = ?";
 
-  return await db.get(query, teamId, matchupId)
+  return await db.get(query, teamId, matchupId);
 }
 
 export async function loadOldPairingMessage(room) {

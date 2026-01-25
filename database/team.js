@@ -1,12 +1,19 @@
 import { db } from "./database.js";
 
+export async function saveTeam(name, discord_snowflake, emoji, color) {
+  const query =
+    "INSERT INTO team (name, discord_snowflake, emoji, color) VALUES (?, ?, ?, ?)";
+
+  await db.run(query, name, discord_snowflake, emoji, color);
+}
+
 export async function loadTeams() {
   return await db.all("SELECT id, discord_snowflake FROM team");
 }
 
 export async function loadActiveTeams() {
   return await db.all(
-    "SELECT id, discord_snowflake, name FROM team WHERE active = 1"
+    "SELECT id, discord_snowflake, name FROM team WHERE active = 1",
   );
 }
 
@@ -14,7 +21,7 @@ export async function loadTeamSheet(teamId, season) {
   const teamInfo = await db.get(
     "SELECT team.name, team.id, team.color, wins, losses, ties, points, battle_differential FROM standing INNER JOIN team ON team = team.id WHERE standing.team = ? AND season = ?;",
     teamId,
-    season
+    season,
   );
   const playerQuery =
     "SELECT player.name, player.id, pstat.wins, pstat.act_wins, pstat.losses, pstat.act_losses, pstat.ties, pstat.star_points, pstat.stars, role.name AS role FROM roster \
@@ -30,14 +37,14 @@ export async function loadTeamSheet(teamId, season) {
 export async function loadTeam(teamId) {
   return await db.get(
     "SELECT id, discord_snowflake FROM team WHERE id = ?",
-    teamId
+    teamId,
   );
 }
 
 export async function loadTeamFromSnowflake(snowflake) {
   return await db.get(
     "SELECT id, discord_snowflake FROM team WHERE discord_snowflake = ?",
-    snowflake
+    snowflake,
   );
 }
 

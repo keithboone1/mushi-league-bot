@@ -8,7 +8,13 @@ import {
 } from "discord.js";
 import shuffle from "lodash/shuffle.js";
 
-import { rightAlign, weekName, baseHandler, wait } from "./util.js";
+import {
+  rightAlign,
+  weekName,
+  baseHandler,
+  wait,
+  passThroughVerifier,
+} from "./util.js";
 import { commitLineup } from "./lineup.js";
 
 import {
@@ -44,7 +50,12 @@ import {
   saveStandingsUpdate,
   loadTopTeams,
 } from "../../database/standing.js";
-import { loadTeams, loadActiveTeams, loadTeam } from "../../database/team.js";
+import {
+  loadTeams,
+  loadActiveTeams,
+  loadTeam,
+  saveTeam,
+} from "../../database/team.js";
 import {
   saveDropAllPlayers,
   saveStarPointsToRatings,
@@ -73,28 +84,39 @@ export const SEASON_COMMAND = {
           option
             .setName("length")
             .setDescription("number of weeks of reg season")
-            .setRequired(true)
+            .setRequired(true),
         )
         .addNumberOption((option) =>
           option
             .setName("playoff_size")
             .setDescription("number of teams in playoff")
-            .setRequired(true)
-        )
+            .setRequired(true),
+        ),
     )
     .addSubcommand((subcommand) =>
       subcommand
         .setName("calculate_standings")
         .setDescription(
-          "calculates the new team and player standings, handles making the next playoff round as well"
-        )
+          "calculates the new team and player standings, handles making the next playoff round as well",
+        ),
     )
     .addSubcommand((subcommand) =>
       subcommand
         .setName("next_week")
         .setDescription(
-          "starts the next week: make new match rooms, post predictions, make extension rooms"
+          "starts the next week: make new match rooms, post predictions, make extension rooms",
+        ),
+    )
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName("add_team")
+        .setDescription("Adds a team to the database")
+        .addRoleOption((option) =>
+          option.setName("role").setDescription("team role").setRequired(true),
         )
+        .addStringOption((option) =>
+          option.setName("emoji").setDescription("team emoji"),
+        ),
     ),
 
   async execute(interaction) {
@@ -107,6 +129,9 @@ export const SEASON_COMMAND = {
         break;
       case "next_week":
         await nextWeek(interaction);
+        break;
+      case "add_team":
+        await addTeam(interaction);
         break;
     }
   },
@@ -150,7 +175,7 @@ async function newSeason(interaction) {
     verifier,
     onConfirm,
     false,
-    false
+    false,
   );
 }
 
@@ -165,10 +190,10 @@ async function dropAllPlayers() {
   for (const player of allActivePlayers) {
     try {
       const discordPlayer = await mushiLeagueGuild.members.fetch(
-        player.discord_snowflake
+        player.discord_snowflake,
       );
       const rolesToRemove = [...discordPlayer.roles.cache.keys()].filter(
-        (snowflake) => allRemovableRoles.has(snowflake)
+        (snowflake) => allRemovableRoles.has(snowflake),
       );
       discordPlayer.roles.remove(rolesToRemove);
     } catch (e) {
@@ -225,7 +250,7 @@ async function calculateStandings(interaction) {
 
     const openPairings = await loadOpenPairings(
       currentSeason.number,
-      nextStandingsWeek
+      nextStandingsWeek,
     );
 
     return { nextStandingsWeek, openPairings };
@@ -243,7 +268,7 @@ async function calculateStandings(interaction) {
 
     if (nextStandingsWeek >= currentSeason.regular_weeks) {
       prompts.push(
-        "This will also ping captains to submit lineups for the next round of playoffs."
+        "This will also ping captains to submit lineups for the next round of playoffs.",
       );
     }
 
@@ -259,7 +284,7 @@ async function calculateStandings(interaction) {
 
     const pairings = await loadAllPairingResults(
       currentSeason.number,
-      nextStandingsWeek
+      nextStandingsWeek,
     );
     let teamWins = {};
     for (const team of await loadActiveTeams()) {
@@ -295,14 +320,14 @@ async function calculateStandings(interaction) {
     verifier,
     onConfirm,
     false,
-    false
+    false,
   );
 }
 
 async function updateStandings(teamWins, nextStandingsWeek) {
   const matchups = await loadAllMatchups(
     currentSeason.number,
-    nextStandingsWeek
+    nextStandingsWeek,
   );
 
   for (const matchup of matchups) {
@@ -311,7 +336,7 @@ async function updateStandings(teamWins, nextStandingsWeek) {
       currentSeason.number,
       differential,
       matchup.leftId,
-      matchup.rightId
+      matchup.rightId,
     );
   }
 }
@@ -320,7 +345,7 @@ async function postStandings(nextStandingsWeek, standings) {
   const mainRoom = await channels.fetch(process.env.mainRoomId);
 
   const standingsText = bold(
-    `Standings at the end of week ${nextStandingsWeek}:\n\n`
+    `Standings at the end of week ${nextStandingsWeek}:\n\n`,
   ).concat(
     codeBlock(
       "".concat(
@@ -328,9 +353,9 @@ async function postStandings(nextStandingsWeek, standings) {
         "------|--------|------|---|---|---|------\n",
         standings
           .map((standing, index) => prettyTextStanding(index + 1, standing))
-          .join("\n")
-      )
-    )
+          .join("\n"),
+      ),
+    ),
   );
 
   await mainRoom.send(standingsText);
@@ -339,10 +364,10 @@ async function postStandings(nextStandingsWeek, standings) {
 function prettyTextStanding(rank, standing) {
   return `${rightAlign(6, rank)}|${rightAlign(8, standing.points)}|${rightAlign(
     6,
-    standing.battle_differential
+    standing.battle_differential,
   )}|${rightAlign(3, standing.wins)}|${rightAlign(
     3,
-    standing.losses
+    standing.losses,
   )}|${rightAlign(3, standing.ties)}| ${standing.teamName}`;
 }
 
@@ -354,7 +379,7 @@ async function setUpPlayoff(standings, numberOfTeams) {
       standings[0].teamId,
       standings[1].teamId,
       currentSeason.number,
-      currentSeason.current_week + 1
+      currentSeason.current_week + 1,
     );
   }
 
@@ -364,14 +389,14 @@ async function setUpPlayoff(standings, numberOfTeams) {
       standings[0].teamId,
       standings[3].teamId,
       currentSeason.number,
-      currentSeason.current_week + 1
+      currentSeason.current_week + 1,
     );
     await saveOneNewMatchup(
       "sf2",
       standings[1].teamId,
       standings[2].teamId,
       currentSeason.number,
-      currentSeason.current_week + 1
+      currentSeason.current_week + 1,
     );
   }
 
@@ -381,14 +406,14 @@ async function setUpPlayoff(standings, numberOfTeams) {
       standings[2].teamId,
       standings[5].teamId,
       currentSeason.number,
-      currentSeason.current_week + 1
+      currentSeason.current_week + 1,
     );
     await saveOneNewMatchup(
       "sf2",
       standings[3].teamId,
       standings[4].teamId,
       currentSeason.number,
-      currentSeason.current_week + 1
+      currentSeason.current_week + 1,
     );
   }
 
@@ -398,16 +423,16 @@ async function setUpPlayoff(standings, numberOfTeams) {
 
 async function hideAllRegularRooms(numberOfTeams) {
   const allTeamSnowflakes = (await loadTeams()).map(
-    (team) => team.discord_snowflake
+    (team) => team.discord_snowflake,
   );
 
   for (let i = 1; i <= numberOfTeams / 2; i++) {
     const matchRoom = await channels.fetch(
-      eval(`process.env.matchChannel${i}Id`)
+      eval(`process.env.matchChannel${i}Id`),
     );
 
     const permissionOverwrites = matchRoom.permissionOverwrites.cache.filter(
-      (overwrite) => !allTeamSnowflakes.includes(overwrite.id)
+      (overwrite) => !allTeamSnowflakes.includes(overwrite.id),
     );
 
     matchRoom.permissionOverwrites.set(permissionOverwrites);
@@ -417,7 +442,7 @@ async function hideAllRegularRooms(numberOfTeams) {
 async function advancePlayoffWinners(teamWins) {
   const matchups = await loadAllMatchups(
     currentSeason.number,
-    currentSeason.current_week
+    currentSeason.current_week,
   );
   const winners = [];
 
@@ -441,7 +466,7 @@ async function advancePlayoffWinners(teamWins) {
         winners[0],
         winners[1],
         currentSeason.number,
-        currentSeason.current_week + 1
+        currentSeason.current_week + 1,
       );
       await announceNextPlayoffRound();
     }
@@ -454,14 +479,14 @@ async function advancePlayoffWinners(teamWins) {
         byeTeams[0].teamId,
         winners[1],
         currentSeason.number,
-        currentSeason.current_week + 1
+        currentSeason.current_week + 1,
       );
       await saveOneNewMatchup(
         "sf2",
         byeTeams[1].teamId,
         winners[0],
         currentSeason.number,
-        currentSeason.current_week + 1
+        currentSeason.current_week + 1,
       );
       await announceNextPlayoffRound();
     }
@@ -473,16 +498,16 @@ async function announceNextPlayoffRound() {
 
   const nextRoundMatchups = await loadAllMatchups(
     currentSeason.number,
-    currentSeason.current_week + 1
+    currentSeason.current_week + 1,
   );
   const playoffAnnouncement = "Next playoff round will be:\n\n".concat(
     ...nextRoundMatchups.map(
       (matchup) =>
         `${roleMention(matchup.leftSnowflake)} vs ${roleMention(
-          matchup.rightSnowflake
-        )}\n`
+          matchup.rightSnowflake,
+        )}\n`,
     ),
-    "\nWork out your slot counts with the opposing captain, and submit lineups with /lineup submit."
+    "\nWork out your slot counts with the opposing captain, and submit lineups with /lineup submit.",
   );
 
   await mainRoom.send({
@@ -503,8 +528,8 @@ async function announceWinner(winner) {
   const mainRoom = await channels.fetch(process.env.mainRoomId);
   const winnerAnnouncement = bold(
     `@everyone Congratulations to the ${roleMention(
-      winner
-    )} for winning Mushi League ${currentSeason.number}!`
+      winner,
+    )} for winning Mushi League ${currentSeason.number}!`,
   );
   mainRoom.send({
     content: winnerAnnouncement,
@@ -517,7 +542,7 @@ async function makeWinnerRole(winningTeamId, winningTeamSnowflake) {
     .hexColor;
   const lastWinnerPosition = (
     await mushiLeagueGuild.roles.cache.find(
-      (r) => r.name === `Season ${currentSeason.number - 1} Winner`
+      (r) => r.name === `Season ${currentSeason.number - 1} Winner`,
     )
   )?.position;
 
@@ -528,7 +553,7 @@ async function makeWinnerRole(winningTeamId, winningTeamSnowflake) {
   });
 
   const players = (await loadAllPlayersOnTeam(winningTeamId)).map(
-    (player) => player.discord_snowflake
+    (player) => player.discord_snowflake,
   );
   const members = await mushiLeagueGuild.members.fetch({ user: players });
 
@@ -539,13 +564,13 @@ async function nextWeek(interaction) {
   async function dataCollector(interaction) {
     const pairingsNeedingExtension = await loadOpenPairings(
       currentSeason.number,
-      currentSeason.current_week
+      currentSeason.current_week,
     );
     const matchupsMissingLineups = await loadMatchupsMissingLineups(
-      currentSeason.number
+      currentSeason.number,
     );
     const userForAutoLineups = await loadPlayerFromSnowflake(
-      interaction.user.id
+      interaction.user.id,
     );
 
     return {
@@ -563,22 +588,22 @@ async function nextWeek(interaction) {
     pairingsNeedingExtension.forEach((pairing) => {
       prompts.push(
         `(${roleMention(pairing.leftTeamSnowflake)}) ${userMention(
-          pairing.leftPlayerSnowflake
+          pairing.leftPlayerSnowflake,
         )} vs ${userMention(pairing.rightPlayerSnowflake)} (${roleMention(
-          pairing.rightTeamSnowflake
-        )}) will be granted an extension`
+          pairing.rightTeamSnowflake,
+        )}) will be granted an extension`,
       );
     });
 
     matchupsMissingLineups.forEach((matchup) => {
       prompts.push(
         `${roleMention(
-          matchup.delinquentTeamSnowflake
+          matchup.delinquentTeamSnowflake,
         )} hasn't submitted their lineup yet`.concat(
           matchup.rigged_count > 0
             ? " and their opponent said they were rigging pairings."
-            : ""
-        )
+            : "",
+        ),
       );
     });
 
@@ -602,7 +627,7 @@ async function nextWeek(interaction) {
       await autoGenerateLineup(matchup, userForAutoLineups);
     }
     const groupedPairings = groupPairingsByRoom(
-      await loadAllPairings(currentSeason.number, currentSeason.current_week)
+      await loadAllPairings(currentSeason.number, currentSeason.current_week),
     );
     await updateMatchRooms(groupedPairings);
     await postPredictions(groupedPairings);
@@ -615,7 +640,7 @@ async function nextWeek(interaction) {
     verifier,
     onConfirm,
     false,
-    false
+    false,
   );
 }
 
@@ -626,7 +651,7 @@ async function advanceCurrentWeek() {
 
 async function updateMatchReportsHeader() {
   const matchReportChannel = await channels.fetch(
-    process.env.matchReportChannelId
+    process.env.matchReportChannelId,
   );
 
   const oldHeader = (await matchReportChannel.messages.fetchPinned())
@@ -637,14 +662,14 @@ async function updateMatchReportsHeader() {
   }
 
   const weekHeader = await matchReportChannel.send(
-    bold(`----- ${weekName(currentSeason.current_week)} games -----`)
+    bold(`----- ${weekName(currentSeason.current_week)} games -----`),
   );
   await matchReportChannel.messages.pin(weekHeader.id);
 }
 
 async function createExtensionRooms(pairingsNeedingExtension) {
   for (const pairingSet of groupPairingsByRoom(
-    pairingsNeedingExtension
+    pairingsNeedingExtension,
   ).values()) {
     const extensionRoom = await createExtensionRoom(pairingSet);
     await notifyPairings(pairingSet, extensionRoom);
@@ -657,7 +682,7 @@ function groupPairingsByRoom(pairings) {
   pairings.forEach((pairing) => {
     pairingsByRoom.set(
       pairing.matchup,
-      (pairingsByRoom.get(pairing.matchup) || []).concat([pairing])
+      (pairingsByRoom.get(pairing.matchup) || []).concat([pairing]),
     );
   });
 
@@ -667,7 +692,7 @@ function groupPairingsByRoom(pairings) {
 async function createExtensionRoom(pairings) {
   const matchRoomName = getMatchRoomName(pairings[0]);
   const matchRoom = await channels.cache.find(
-    (channel) => channel.name === matchRoomName
+    (channel) => channel.name === matchRoomName,
   );
 
   return await matchRoom.clone({
@@ -677,7 +702,7 @@ async function createExtensionRoom(pairings) {
 
 function getMatchRoomName(pairing) {
   return `${pairing.room}-${initials(pairing.leftTeamName)}-vs-${initials(
-    pairing.rightTeamName
+    pairing.rightTeamName,
   )}`;
 }
 
@@ -691,15 +716,15 @@ function initials(name) {
 
 async function notifyPairings(pairingSet, extensionRoom) {
   const extensionMessage = `${roleMention(
-    pairingSet[0].leftTeamSnowflake
+    pairingSet[0].leftTeamSnowflake,
   )} vs ${roleMention(pairingSet[0].rightTeamSnowflake)}\n\n`.concat(
     ...pairingSet.map(
       (pairing) =>
         `${userMention(pairing.leftPlayerSnowflake)} vs ${userMention(
-          pairing.rightPlayerSnowflake
-        )}\n`
+          pairing.rightPlayerSnowflake,
+        )}\n`,
     ),
-    "\nGet your games done. You have 24 hours."
+    "\nGet your games done. You have 24 hours.",
   );
 
   const extensionPost = await extensionRoom.send({
@@ -723,7 +748,7 @@ async function updateMatchRooms(groupedPairings) {
     wait(1000);
     const matchRoomName = getMatchRoomName(pairingSet[0]);
     const matchRoom = await channels.fetch(
-      eval(`process.env.matchChannel${pairingSet[0].room}Id`)
+      eval(`process.env.matchChannel${pairingSet[0].room}Id`),
     );
 
     await setUpRoom(pairingSet, matchRoomName, matchRoom);
@@ -735,7 +760,7 @@ async function updateMatchRooms(groupedPairings) {
 async function setUpRoom(pairingSet, matchRoomName, matchRoom) {
   await matchRoom.setName(matchRoomName);
   const allTeamSnowflakes = (await loadTeams()).map(
-    (team) => team.discord_snowflake
+    (team) => team.discord_snowflake,
   );
 
   if (pairingSet[0].room == parseInt(pairingSet[0].room)) {
@@ -807,16 +832,16 @@ async function unpinOldPairingMessage(room, matchRoom) {
 
 async function postPairingMessage(pairingSet, matchRoom) {
   const pairingMessage = `${roleMention(
-    pairingSet[0].leftTeamSnowflake
+    pairingSet[0].leftTeamSnowflake,
   )} vs ${roleMention(pairingSet[0].rightTeamSnowflake)}\n\n`.concat(
     ...pairingSet.map(
       (pairing) =>
         `${userMention(pairing.leftPlayerSnowflake)} vs ${userMention(
-          pairing.rightPlayerSnowflake
-        )}\n`
+          pairing.rightPlayerSnowflake,
+        )}\n`,
     ),
     "\n",
-    rules
+    rules,
   );
 
   const pairingPost = await matchRoom.send({
@@ -840,3 +865,46 @@ const rules =
   "Swagger is banned too. Clicking it = immediate game loss.\n" +
   "\n" +
   "GL HF!";
+
+async function addTeam(interaction) {
+  async function dataCollector(interaction) {
+    const team = interaction.options.getRole("role");
+
+    const emoji = interaction.options.getString("emoji");
+
+    const name = team.name;
+    const snowflake = team.id;
+    const color = `#${team.color.toString(16).padStart(6, "0")}`;
+
+    return { emoji, name, snowflake, color };
+  }
+
+  function verifier(data) {
+    const {} = data;
+    let failures = [],
+      prompts = [];
+
+    const confirmLabel = "Confirm Adding Player";
+    const confirmMessage = stars
+      ? `${userMention(playerSnowflake)} added to player pool with star rating ${stars}.`
+      : `${userMention(playerSnowflake)} added to player pool.`;
+    const cancelMessage = `${userMention(playerSnowflake)} not added to player pool.`;
+
+    return [failures, prompts, confirmLabel, confirmMessage, cancelMessage];
+  }
+
+  async function onConfirm(data) {
+    const { name, emoji, snowflake, color } = data;
+
+    await saveTeam(name, snowflake, emoji, color);
+  }
+
+  await baseHandler(
+    interaction,
+    dataCollector,
+    passThroughVerifier,
+    onConfirm,
+    true,
+    false,
+  );
+}
