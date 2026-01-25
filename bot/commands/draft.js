@@ -139,7 +139,7 @@ async function listPlayers(interaction) {
 
     const submitter = await loadPlayerFromSnowflake(interaction.user.id);
 
-    if (!submitter.teamId && !listAll) {
+    if (!submitter?.teamId && !listAll) {
       return {
         failure:
           "You must be on a team to use this command without the 'all' option.",
@@ -150,9 +150,9 @@ async function listPlayers(interaction) {
       ? 10
       : fixFloat(
           await maxStarsNext(
-            submitter.teamId,
+            submitter?.teamId,
             (
-              await loadNextPickRoundForTeam(submitter.teamId, currentSeason.number)
+              await loadNextPickRoundForTeam(submitter?.teamId, currentSeason.number)
             ).round
           )
         );
@@ -160,7 +160,7 @@ async function listPlayers(interaction) {
     const availablePlayers = await loadUndraftedPlayers(maxStars);
 
     return {
-      teamSnowflake: submitter.teamSnowflake,
+      teamSnowflake: submitter?.teamSnowflake,
       maxStars,
       listAll,
       availablePlayers,

@@ -348,6 +348,16 @@ function prettyTextStanding(rank, standing) {
 
 async function setUpPlayoff(standings, numberOfTeams) {
   // I'm sure there's an algorithm but I do not feel like figuring it out right now
+  if (currentSeason.playoff_size === 2) {
+    await saveOneNewMatchup(
+      "finals",
+      standings[0].teamId,
+      standings[1].teamId,
+      currentSeason.number,
+      currentSeason.current_week + 1
+    );
+  }
+
   if (currentSeason.playoff_size === 4) {
     await saveOneNewMatchup(
       "sf1",
