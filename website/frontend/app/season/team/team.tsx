@@ -1,15 +1,27 @@
 import { twMerge } from "tailwind-merge";
 import type { Route } from "./+types/team";
 import { NavLink } from "react-router";
+import { useEffect, useState } from "react";
 
 export default function Team({ loaderData }: Route.ComponentProps) {
   const leadershipTeam = loaderData.players.filter((p) => p.role !== "Player");
 
   const playingMembers = loaderData.players.filter((p) => p.role !== "Coach");
 
+  const [imageError, setImageError] = useState(false);
+  // component does not re-mount when going from one team to another
+  useEffect(() => setImageError(false), [loaderData.id]);
+
   return (
     <>
       <h2>{loaderData.name}</h2>
+      {!imageError && (
+        <img
+          className="h-80"
+          src={`/team_logos/${loaderData.id}.png`}
+          onError={() => setImageError(true)}
+        />
+      )}
       {leadershipTeam.map((l) => (
         <div key={l.id}>
           <span className="font-bold">{l.role}</span>{" "}
@@ -38,7 +50,7 @@ export default function Team({ loaderData }: Route.ComponentProps) {
               <td
                 className={twMerge(
                   "px-2",
-                  player.role === "Captain" && "font-bold"
+                  player.role === "Captain" && "font-bold",
                 )}
               >
                 <NavLink to={`/players/${player.id}`} className="underline">
