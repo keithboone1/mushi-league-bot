@@ -198,7 +198,7 @@ export async function saveLineupSubmission(matchupId, side, lineup) {
     for (const index in pairings) {
       await db.run(
         `UPDATE pairing SET ${side}_player = ? WHERE id = ?`,
-        lineup[index].id,
+        lineup[index].id ?? 4,
         pairings[index].id
       );
     }
@@ -206,7 +206,7 @@ export async function saveLineupSubmission(matchupId, side, lineup) {
     const query =
       `INSERT INTO pairing (matchup, slot, ${side}_player) VALUES`.concat(
         lineup.map(
-          (player, index) => `\n(${matchupId}, ${index + 1}, ${player.id})`
+          (player, index) => `\n(${matchupId}, ${index + 1}, ${player.id ?? 4})`
         )
       );
 

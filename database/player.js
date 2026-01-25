@@ -91,7 +91,7 @@ export async function loadExistingLeader(teamSnowflake, roleSnowflake) {
 
 export async function loadTeamInStarOrder(teamSnowflake) {
   const query =
-    "SELECT player.id, player.discord_snowflake, player.stars, team.discord_snowflake AS teamSnowflake, role.name AS roleName FROM player \
+    "SELECT player.id, player.name, player.discord_snowflake, player.stars, team.discord_snowflake AS teamSnowflake, role.name AS roleName FROM player \
          INNER JOIN team ON player.team = team.id \
          INNER JOIN role ON player.role = role.id \
          WHERE team.discord_snowflake = ? \

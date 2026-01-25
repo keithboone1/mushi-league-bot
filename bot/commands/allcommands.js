@@ -5,6 +5,6 @@ import { HELP_COMMAND } from './help.js';
 import { SEASON_COMMAND } from './season.js';
 import { DRAFT_COMMAND } from './draft.js';
 import { DATA_COMMAND } from './data.js';
-import { TEST_COMMAND } from './test.js';
+import { BACKFILL_COMMAND } from './backfill.js';
 
-export default [PLAYER_COMMAND, LINEUP_COMMAND, MATCH_COMMAND, HELP_COMMAND, SEASON_COMMAND, DRAFT_COMMAND, DATA_COMMAND, TEST_COMMAND];
+export default [PLAYER_COMMAND, LINEUP_COMMAND, MATCH_COMMAND, HELP_COMMAND, SEASON_COMMAND, DRAFT_COMMAND, DATA_COMMAND, BACKFILL_COMMAND];

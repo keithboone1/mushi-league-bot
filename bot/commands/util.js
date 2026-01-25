@@ -140,6 +140,10 @@ export function userIsCoach(user) {
     return user.roles.cache.has(process.env.coachRoleId);
 }
 
+export function userIsBackfiller(user) {
+    return user.roles.cache.has(process.env.backfillerRoleId);
+}
+
 export function weekName(week) {
     if (week <= currentSeason.regular_weeks) {
         return `Week ${week}`;

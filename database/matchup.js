@@ -4,7 +4,7 @@ export async function saveScheduleMessageId(messageId, matchupId) {
   await db.run(
     "UPDATE matchup SET schedule_message = ? WHERE id = ?",
     messageId,
-    matchupId
+    matchupId,
   );
 }
 
@@ -12,7 +12,7 @@ export async function saveMatchRoomMessageId(messageId, matchupId) {
   await db.run(
     "UPDATE matchup SET channel_message = ? WHERE id = ?",
     messageId,
-    matchupId
+    matchupId,
   );
 }
 
@@ -21,7 +21,7 @@ export async function saveOneNewMatchup(
   leftTeamId,
   rightTeamId,
   season,
-  week
+  week,
 ) {
   await db.run(
     "INSERT INTO matchup (room, week, left_team, right_team) SELECT ?, id, ?, ? FROM week WHERE season = ? AND number = ?",
@@ -29,7 +29,7 @@ export async function saveOneNewMatchup(
     leftTeamId,
     rightTeamId,
     season,
-    week
+    week,
   );
 }
 
@@ -38,14 +38,14 @@ export async function saveMatchupSubmission(
   riggedCount,
   slots,
   side,
-  submitterId
+  submitterId,
 ) {
   await db.run(
     `UPDATE matchup SET rigged_count = ?, slots = ?, ${side}_submitter = ? WHERE id = ?`,
     riggedCount,
     slots,
     submitterId,
-    matchupId
+    matchupId,
   );
 }
 
@@ -81,12 +81,6 @@ export async function loadMatchupForTeam(season, week, teamSnowflake) {
                 team.id AS submittingTeamId, team.discord_snowflake AS teamSnowflake FROM matchup \
          INNER JOIN week ON matchup.week = week.id \
          INNER JOIN team ON (matchup.left_team = team.id OR matchup.right_team = team.id) \
-         WHERE week.season = ? AND week.number = ? AND team.discord_snowflake = ? \
-         UNION \
-         SELECT matchup.id, matchup.slots, matchup.rigged_count, matchup.left_team, matchup.right_team, matchup.room, matchup.channel_message, matchup.schedule_message, \
-                team.id AS submittingTeamId, team.discord_snowflake AS teamSnowflake FROM matchup \
-         INNER JOIN week on matchup.week = week.id \
-         INNER JOIN team on matchup.right_team = team.id \
          WHERE week.season = ? AND week.number = ? AND team.discord_snowflake = ?";
 
   return await db.get(
@@ -96,13 +90,22 @@ export async function loadMatchupForTeam(season, week, teamSnowflake) {
     teamSnowflake,
     season,
     week,
-    teamSnowflake
+    teamSnowflake,
   );
+}
+
+export async function loadExistingPairingForMatchup(matchupId, teamId) {
+  const query =
+    "select iif(left_team = ?, left_player, right_player) as alreadyFull from pairing \
+      inner join matchup on pairing.matchup = matchup.id \
+      where slot = 1 and matchup.id = ?";
+
+  return await db.get(query, teamId, matchupId)
 }
 
 export async function loadOldPairingMessage(room) {
   return await db.get(
     "SELECT channel_message FROM matchup WHERE room = ? AND channel_message IS NOT NULL ORDER BY week DESC LIMIT 1",
-    room
+    room,
   );
 }
