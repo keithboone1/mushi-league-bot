@@ -23,6 +23,7 @@ import {
 import {
   loadStandings,
   saveBackfillStandings,
+  saveRecalculateStandings,
 } from "../../database/standing.js";
 import {
   setScheduledTime,
@@ -64,6 +65,7 @@ import {
 import { loadExistingRoster, loadRoster } from "../../database/roster.js";
 import { saveBackfillSeason, saveNewSeason } from "../../database/season.js";
 import { saveNewWeeks } from "../../database/week.js";
+import { saveRecalculatePstats } from "../../database/pstat.js";
 
 export const BACKFILL_COMMAND = {
   data: new SlashCommandBuilder()
@@ -329,6 +331,14 @@ export const BACKFILL_COMMAND = {
         .addBooleanOption((option) =>
           option.setName("dead").setDescription("true if dead"),
         ),
+    )
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName("stats")
+        .setDescription("Run to re-calculate stats from scratch for a season")
+        .addNumberOption((option) =>
+          option.setName("season").setDescription("season").setRequired(true),
+        ),
     ),
 
   async execute(interaction) {
@@ -347,6 +357,9 @@ export const BACKFILL_COMMAND = {
         break;
       case "result":
         await backfillResult(interaction);
+        break;
+      case "stats":
+        await rerunStats(interaction);
         break;
     }
   },
@@ -860,6 +873,38 @@ async function backfillResult(interaction) {
     interaction,
     dataCollector,
     verifier,
+    onConfirm,
+    true,
+    false,
+  );
+}
+
+async function rerunStats(interaction) {
+  async function dataCollector(interaction) {
+    if (
+      !userIsBackfiller(interaction.member) &&
+      !userIsMod(interaction.member)
+    ) {
+      return {
+        failure: "You must be a backfiller or mod to use this command.",
+      };
+    }
+
+    const season = interaction.options.getNumber("season");
+
+    return { season };
+  }
+
+  async function onConfirm(data) {
+    const { season } = data;
+    await saveRecalculateStandings(season);
+    await saveRecalculatePstats(season);
+  }
+
+  await baseHandler(
+    interaction,
+    dataCollector,
+    passThroughVerifier,
     onConfirm,
     true,
     false,
