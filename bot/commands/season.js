@@ -115,7 +115,7 @@ export const SEASON_COMMAND = {
           option.setName("role").setDescription("team role").setRequired(true),
         )
         .addStringOption((option) =>
-          option.setName("emoji").setDescription("team emoji"),
+          option.setName("emoji").setDescription("team emoji").setRequired(true),
         ),
     ),
 
@@ -866,7 +866,7 @@ const rules =
   "\n" +
   "GL HF!";
 
-async function addTeam(interaction) {
+export async function addTeam(interaction) {
   async function dataCollector(interaction) {
     const team = interaction.options.getRole("role");
 

@@ -1,70 +1,42 @@
 import {
   SlashCommandBuilder,
-  PermissionFlagsBits,
   roleMention,
   userMention,
-  bold,
-  codeBlock,
 } from "discord.js";
-import { channels, currentSeason, mushiLeagueGuild } from "../globals.js";
-import { loadTeam, loadTeamFromSnowflake } from "../../database/team.js";
+import { loadTeamFromSnowflake } from "../../database/team.js";
 import {
-  loadAllPlayersOnTeam,
   loadPlayerFromUsername,
   saveNewPlayer,
 } from "../../database/player.js";
 import { saveBackfillRoster } from "../../database/roster.js";
 import {
-  postPredictionStandings,
-  updatePrediction,
-  changePredictionsPlayer,
-  postPredictions,
-} from "../features/predictions.js";
-import {
-  loadStandings,
   saveBackfillStandings,
   saveRecalculateStandings,
 } from "../../database/standing.js";
 import {
-  setScheduledTime,
-  changeScheduledPlayer,
-  postScheduling,
-} from "../features/schedule.js";
-import { saveDraftSetup } from "../../database/draft.js";
-import {
-  addModOverrideableFailure,
-  fixFloat,
-  userIsCaptain,
-  userIsCoach,
   userIsMod,
-  weekName,
-  baseFunctionlessHandler,
   baseHandler,
   userIsBackfiller,
   passThroughVerifier,
 } from "./util.js";
 import {
   loadPlayerFromSnowflake,
-  loadTeamInStarOrder,
-  loadPlayersForSubstitution,
 } from "../../database/player.js";
 import {
-  loadOneLineup,
-  saveSubstitution,
   loadOnePairing,
   savePairingResult,
   saveLineupSubmission,
 } from "../../database/pairing.js";
 import {
-  loadMatchupsMissingLineups,
   loadMatchupForTeam,
   saveMatchupSubmission,
   loadExistingPairingForMatchup,
   saveOneNewMatchup,
 } from "../../database/matchup.js";
 import { loadExistingRoster, loadRoster } from "../../database/roster.js";
-import { saveBackfillSeason, saveNewSeason } from "../../database/season.js";
+import { saveBackfillSeason } from "../../database/season.js";
 import { saveNewWeeks } from "../../database/week.js";
+import { addTeam } from "./season.js";
 import { saveRecalculatePstats } from "../../database/pstat.js";
 
 export const BACKFILL_COMMAND = {
@@ -72,6 +44,17 @@ export const BACKFILL_COMMAND = {
     .setName("backfill")
     .setDescription(
       "backfill bot data for previous seasons DO NOT USE WITHOUT ASKING",
+    )
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName("team")
+        .setDescription("backfill a team")
+        .addRoleOption((option) =>
+          option.setName("role").setDescription("team role").setRequired(true),
+        )
+        .addStringOption((option) =>
+          option.setName("emoji").setDescription("team emoji"),
+        )
     )
     .addSubcommand((subcommand) =>
       subcommand
@@ -343,6 +326,9 @@ export const BACKFILL_COMMAND = {
 
   async execute(interaction) {
     switch (interaction.options.getSubcommand()) {
+      case "team":
+        await backfillTeam(interaction);
+        break;
       case "season":
         await backfillSeason(interaction);
         break;
@@ -364,6 +350,17 @@ export const BACKFILL_COMMAND = {
     }
   },
 };
+
+async function backfillTeam(interaction) {
+  if (
+      !userIsBackfiller(interaction.member) &&
+      !userIsMod(interaction.member)
+    ) {
+      return
+    }
+
+  addTeam(interaction)
+}
 
 async function backfillSeason(interaction) {
   async function dataCollector(interaction) {
