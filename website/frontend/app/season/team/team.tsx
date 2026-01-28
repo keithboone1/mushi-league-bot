@@ -1,4 +1,4 @@
-import { twMerge } from "tailwind-merge";
+import { twJoin, twMerge } from "tailwind-merge";
 import type { Route } from "./+types/team";
 import { NavLink } from "react-router";
 import { useEffect, useState } from "react";
@@ -30,7 +30,7 @@ export default function Team({ loaderData }: Route.ComponentProps) {
           </NavLink>
         </div>
       ))}
-      <table className="border border-collapse text-center">
+      <table className="border border-collapse text-center p-1">
         <thead className="border">
           <tr>
             <th className="px-2">Player</th>
@@ -46,7 +46,10 @@ export default function Team({ loaderData }: Route.ComponentProps) {
         </thead>
         <tbody>
           {playingMembers.map((player) => (
-            <tr key={player.id}>
+            <tr
+              key={player.id}
+              className={twJoin(player.dropped_week && "strikeout [&>td]:relative")}
+            >
               <td
                 className={twMerge(
                   "px-2",
@@ -98,11 +101,12 @@ type TeamQuery = {
     star_points: number;
     stars: number;
     role: string;
+    dropped_week: number;
   }[];
 };
 
 export async function loader({ params: { season, teamId } }: Route.LoaderArgs) {
   return (await (
-    await fetch(`https://mushileague.gg/api/season/${season}/team/${teamId}`)
+    await fetch(`http://localhost:3001/api/season/${season}/team/${teamId}`)
   ).json()) as TeamQuery;
 }

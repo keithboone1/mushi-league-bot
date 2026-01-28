@@ -57,3 +57,25 @@ body {}
     transform: rotate(360deg);
   }
 }
+
+tr.strikeout td:before {
+    content: " ";
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    border-bottom: 1px solid #111;
+
+    &:first-child {
+      left: 8px;
+    }
+    &:last-child {
+      right: 8px;
+    }
+}
+tr.strikeout td:first-child::before {
+      left: 8px;
+}
+tr.strikeout td:last-child::before {
+      right: 8px;
+}

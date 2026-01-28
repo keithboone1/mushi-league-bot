@@ -163,7 +163,7 @@ export async function getSeasonSize() {
 
 export async function loadPlayerHistory(playerId) {
   const playerInfoQuery =
-    "SELECT player.name AS playerName, roster.season, role.name AS roleName, pstat.stars, pstat.wins, pstat.act_wins, pstat.losses, pstat.act_losses, pstat.ties, pstat.star_points, team.id AS teamId, team.name AS teamName, team.color \
+    "SELECT player.name AS playerName, roster.season, roster.picked_up_week, roster.dropped_week, role.name AS roleName, pstat.stars, pstat.wins, pstat.act_wins, pstat.losses, pstat.act_losses, pstat.ties, pstat.star_points, team.id AS teamId, team.name AS teamName, team.color \
      FROM player \
      INNER JOIN roster ON roster.player = player.id \
      LEFT JOIN pstat ON pstat.player = player.id AND pstat.season = roster.season \

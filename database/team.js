@@ -24,7 +24,7 @@ export async function loadTeamSheet(teamId, season) {
     season,
   );
   const playerQuery =
-    "SELECT player.name, player.id, pstat.wins, pstat.act_wins, pstat.losses, pstat.act_losses, pstat.ties, pstat.star_points, pstat.stars, role.name AS role FROM roster \
+    "SELECT roster.dropped_week, player.name, player.id, pstat.wins, pstat.act_wins, pstat.losses, pstat.act_losses, pstat.ties, pstat.star_points, pstat.stars, role.name AS role FROM roster \
      INNER JOIN player ON player.id = roster.player \
      LEFT JOIN pstat ON pstat.player = roster.player AND pstat.season = roster.season \
      INNER JOIN role ON role.id = roster.role \

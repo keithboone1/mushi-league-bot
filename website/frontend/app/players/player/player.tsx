@@ -8,6 +8,8 @@ type PlayerQuery = {
   playerInfo: {
     playerName: string;
     season: number;
+    picked_up_week: number;
+    dropped_week: number;
     roleName: string;
     stars: number;
     wins: number;
@@ -75,6 +77,12 @@ export default function Season({
               <span> ({season.stars.toFixed(2)} stars)</span>
             )}
           </div>
+          {season.picked_up_week && (
+            <div>(Picked up week {season.picked_up_week})</div>
+          )}
+          {season.dropped_week && (
+            <div>(Dropped week {season.dropped_week})</div>
+          )}
           {season.pairings?.map((pairing) => {
             const result = pairing.dead
               ? results.dead
@@ -164,7 +172,7 @@ export default function Season({
 
 export async function loader({ params: { playerId } }: Route.LoaderArgs) {
   const rawData = (await (
-    await fetch(`https://mushileague.gg/api/players/${playerId}`)
+    await fetch(`http://localhost:3001/api/players/${playerId}`)
   ).json()) as PlayerQuery;
 
   const pairingsBySeason = rawData.pairings.reduce((accum, pairing) => {
