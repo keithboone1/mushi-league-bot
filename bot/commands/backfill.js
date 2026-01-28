@@ -539,7 +539,7 @@ async function backfillPlayer(interaction) {
 
     if (!playerId) {
       await saveNewPlayer(undefined, playerName, undefined);
-      playerId = await loadPlayerFromUsername(players[i]);
+      playerId = await loadPlayerFromUsername(playerName);
     }
 
     await saveBackfillPlayer(
