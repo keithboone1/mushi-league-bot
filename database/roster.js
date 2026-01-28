@@ -95,5 +95,5 @@ export async function loadRoster(season, teamSnowflake) {
 export async function loadPlayerOnRoster(season, playerId) {
   const query = "SELECT id FROM roster WHERE season = ? AND player = ?";
 
-  return await db.query(query, season, playerId);
+  return await db.get(query, season, playerId);
 }
