@@ -172,7 +172,7 @@ export default function Season({
 
 export async function loader({ params: { playerId } }: Route.LoaderArgs) {
   const rawData = (await (
-    await fetch(`http://localhost:3001/api/players/${playerId}`)
+    await fetch(`https://mushileague.gg/api/players/${playerId}`)
   ).json()) as PlayerQuery;
 
   const pairingsBySeason = rawData.pairings.reduce((accum, pairing) => {
