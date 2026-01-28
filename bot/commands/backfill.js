@@ -1,14 +1,14 @@
-import {
-  SlashCommandBuilder,
-  roleMention,
-  userMention,
-} from "discord.js";
+import { SlashCommandBuilder, roleMention, userMention } from "discord.js";
 import { loadTeamFromSnowflake } from "../../database/team.js";
 import {
   loadPlayerFromUsername,
   saveNewPlayer,
 } from "../../database/player.js";
-import { saveBackfillRoster } from "../../database/roster.js";
+import {
+  loadPlayerOnRoster,
+  saveBackfillPlayer,
+  saveBackfillRoster,
+} from "../../database/roster.js";
 import {
   saveBackfillStandings,
   saveRecalculateStandings,
@@ -19,9 +19,7 @@ import {
   userIsBackfiller,
   passThroughVerifier,
 } from "./util.js";
-import {
-  loadPlayerFromSnowflake,
-} from "../../database/player.js";
+import { loadPlayerFromSnowflake } from "../../database/player.js";
 import {
   loadOnePairing,
   savePairingResult,
@@ -38,6 +36,7 @@ import { saveBackfillSeason } from "../../database/season.js";
 import { saveNewWeeks } from "../../database/week.js";
 import { addTeam } from "./season.js";
 import { saveRecalculatePstats } from "../../database/pstat.js";
+import { loadRoleFromSnowflake } from "../../database/role.js";
 
 export const BACKFILL_COMMAND = {
   data: new SlashCommandBuilder()
@@ -54,7 +53,7 @@ export const BACKFILL_COMMAND = {
         )
         .addStringOption((option) =>
           option.setName("emoji").setDescription("team emoji"),
-        )
+        ),
     )
     .addSubcommand((subcommand) =>
       subcommand
@@ -116,6 +115,32 @@ export const BACKFILL_COMMAND = {
         )
         .addRoleOption((option) =>
           option.setName("team14").setDescription("team14"),
+        ),
+    )
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName("player")
+        .setDescription("backfill a single player")
+        .addNumberOption((option) =>
+          option.setName("season").setDescription("season").setRequired(true),
+        )
+        .addRoleOption((option) =>
+          option.setName("team").setDescription("team").setRequired(true),
+        )
+        .addStringOption((option) =>
+          option.setName("user").setDescription("user").setRequired(true),
+        )
+        .addRoleOption((option) =>
+          option.setName("role").setDescription("role").setRequired(true),
+        )
+        .addNumberOption((option) =>
+          option.setName("dropped_week").setDescription("week dropped"),
+        )
+        .addNumberOption((option) =>
+          option.setName("picked_up_week").setDescription("week picked up"),
+        )
+        .addNumberOption((option) =>
+          option.setName("stars").setDescription("stars"),
         ),
     )
     .addSubcommand((subcommand) =>
@@ -332,6 +357,9 @@ export const BACKFILL_COMMAND = {
       case "season":
         await backfillSeason(interaction);
         break;
+      case "player":
+        await backfillPlayer(interaction);
+        break;
       case "roster":
         await backfillRoster(interaction);
         break;
@@ -352,14 +380,11 @@ export const BACKFILL_COMMAND = {
 };
 
 async function backfillTeam(interaction) {
-  if (
-      !userIsBackfiller(interaction.member) &&
-      !userIsMod(interaction.member)
-    ) {
-      return
-    }
+  if (!userIsBackfiller(interaction.member) && !userIsMod(interaction.member)) {
+    return;
+  }
 
-  addTeam(interaction)
+  addTeam(interaction);
 }
 
 async function backfillSeason(interaction) {
@@ -432,6 +457,109 @@ async function backfillSeason(interaction) {
     onConfirm,
     true,
     true,
+  );
+}
+
+async function backfillPlayer(interaction) {
+  async function dataCollector(interaction) {
+    if (
+      !userIsBackfiller(interaction.member) &&
+      !userIsMod(interaction.member)
+    ) {
+      return {
+        failure: "You must be a backfiller or mod to use this command.",
+      };
+    }
+
+    const season = interaction.options.getNumber("season");
+    const teamSnowflake = interaction.options.getRole("team").id;
+    const playerName = interaction.options.getString("user");
+    const roleSnowflake = interaction.options.getRole("role").id;
+    const droppedWeek = interaction.options.getNumber("dropped_week");
+    const pickedUpWeek = interaction.options.getNumber("picked_up_week");
+    const stars = interaction.options.getNumber("stars");
+
+    const { id: teamId } = await loadTeamFromSnowflake(teamSnowflake);
+    const { id: roleId } = await loadRoleFromSnowflake(roleSnowflake);
+    const { id: playerId } = await loadPlayerFromUsername(playerName);
+    const { id: rosterSpotId } = await loadPlayerOnRoster(season, playerId);
+
+    return {
+      season,
+      teamId,
+      playerName,
+      roleId,
+      droppedWeek,
+      pickedUpWeek,
+      stars,
+      playerId,
+      rosterSpotId,
+    };
+  }
+
+  function verifier(data) {
+    const { season, playerName, playerId, rosterSpotId, teamId } = data;
+    let failures = [],
+      prompts = [];
+
+    if (!teamId) {
+      failures.push("Didn't find input team.");
+    }
+
+    if (!playerId) {
+      prompts.push(
+        `${playerName} not found. Will create a new player record for them.`,
+      );
+    }
+
+    if (!!rosterSpotId) {
+      prompts.push(
+        `Already found ${playerName} on a roster in season ${season}. Are you sure?`,
+      );
+    }
+
+    const confirmLabel = "Confirm player data";
+    const confirmMessage = `Roster updated for ${playerName} in season ${season}.`;
+    const cancelMessage = "No update.";
+
+    return [failures, prompts, confirmLabel, confirmMessage, cancelMessage];
+  }
+
+  async function onConfirm(data) {
+    let {
+      season,
+      teamId,
+      playerName,
+      roleId,
+      droppedWeek,
+      pickedUpWeek,
+      stars,
+      playerId,
+    } = data;
+
+    if (!playerId) {
+      await saveNewPlayer(undefined, playerName, undefined);
+      playerId = await loadPlayerFromUsername(players[i]);
+    }
+
+    await saveBackfillPlayer(
+      season,
+      teamId,
+      roleId,
+      playerId,
+      stars,
+      pickedUpWeek,
+      droppedWeek,
+    );
+  }
+
+  await baseHandler(
+    interaction,
+    dataCollector,
+    verifier,
+    onConfirm,
+    true,
+    false,
   );
 }
 

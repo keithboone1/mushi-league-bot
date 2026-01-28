@@ -1,5 +1,30 @@
 import { db } from "./database.js";
 
+export async function saveBackfillPlayer(
+  season,
+  teamId,
+  roleId,
+  playerId,
+  stars,
+  pickedUpWeek,
+  droppedWeek,
+) {
+  const updatePstatQuery = `INSERT INTO pstat (season, player, stars) VALUES (?, ?, ?) ON CONFLICT DO UPDATE SET stars = EXCLUDED.stars;`;
+
+  const updateRosterQuery = `INSERT INTO roster (season, player, team, role, picked_up_week, dropped_week) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT DO UPDATE SET team = EXCLUDED.team, role = EXCLUDED.role, picked_up_week = EXCLUDED.picked_up_week, dropped_week = EXCLUDED.dropped_week;`;
+
+  await db.run(updatePstatQuery, season, playerId, stars);
+  await db.run(
+    updateRosterQuery,
+    season,
+    playerId,
+    teamId,
+    roleId,
+    pickedUpWeek,
+    droppedWeek,
+  );
+}
+
 export async function saveBackfillRoster(
   season,
   teamId,
@@ -65,4 +90,10 @@ export async function loadRoster(season, teamSnowflake) {
          WHERE roster.season = ? AND team.discord_snowflake = ?";
 
   return await db.all(query, season, teamSnowflake);
+}
+
+export async function loadPlayerOnRoster(season, playerId) {
+  const query = "SELECT id FROM roster WHERE season = ? AND player = ?";
+
+  return await db.query(query, season, playerId);
 }
