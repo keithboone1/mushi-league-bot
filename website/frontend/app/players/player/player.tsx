@@ -70,7 +70,10 @@ export default function Season({
               style={{ backgroundColor: season.color }}
             >
               {season.teamName}
-            </span> ({season.stars.toFixed(2)} stars)
+            </span>
+            {season.roleName !== "Coach" && (
+              <span> ({season.stars.toFixed(2)} stars)</span>
+            )}
           </div>
           {season.pairings?.map((pairing) => {
             const result = pairing.dead
@@ -112,7 +115,7 @@ export default function Season({
                 >
                   {game}
                 </span>
-              )
+              ),
             );
 
             return (
@@ -124,13 +127,13 @@ export default function Season({
                   {weekName(
                     pairing.weekNumber,
                     pairing.regular_weeks,
-                    pairing.playoff_size
+                    pairing.playoff_size,
                   )}{" "}
                   vs{" "}
                   <span
                     className={twJoin(
                       "px-1",
-                      teamColorText(pairing.opponentTeamColor)
+                      teamColorText(pairing.opponentTeamColor),
                     )}
                     style={{ backgroundColor: pairing.opponentTeamColor }}
                   >
@@ -161,8 +164,10 @@ export default function Season({
 
 export async function loader({ params: { playerId } }: Route.LoaderArgs) {
   const rawData = (await (
-    await fetch(`https://mushileague.gg/api/players/${playerId}`)
+    await fetch(`http://localhost:3001/api/players/${playerId}`)
   ).json()) as PlayerQuery;
+
+  console.log(rawData);
 
   const pairingsBySeason = rawData.pairings.reduce((accum, pairing) => {
     accum[pairing.season] = [...(accum[pairing.season] ?? []), pairing];
