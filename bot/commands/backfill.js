@@ -502,7 +502,7 @@ async function backfillPlayer(interaction) {
     let failures = [],
       prompts = [];
 
-    if (!teamId) {
+    if (teamId === undefined) {
       failures.push("Didn't find input team.");
     }
 
