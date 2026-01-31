@@ -115,6 +115,12 @@ export const BACKFILL_COMMAND = {
         )
         .addRoleOption((option) =>
           option.setName("team14").setDescription("team14"),
+        )
+        .addRoleOption((option) =>
+          option
+            .setName("winner")
+            .setDescription("winning team")
+            .setRequired(true),
         ),
     )
     .addSubcommand((subcommand) =>
@@ -419,12 +425,14 @@ async function backfillSeason(interaction) {
     ]
       .filter((team) => !!team)
       .map((team) => team.id);
+    const winnerSnowflake = interaction.options.getRole("winner");
 
     return {
       season,
       numWeeks,
       playoffSize,
       teamSnowflakes,
+      winnerSnowflake,
     };
   }
 
@@ -441,11 +449,11 @@ async function backfillSeason(interaction) {
   }
 
   async function onConfirm(data) {
-    const { season, numWeeks, playoffSize, teamSnowflakes } = data;
+    const { season, numWeeks, playoffSize, teamSnowflakes, winnerSnowflake } = data;
 
     const totalWeeks = numWeeks + Math.ceil(Math.log2(playoffSize));
 
-    await saveBackfillSeason(season, numWeeks, playoffSize);
+    await saveBackfillSeason(season, numWeeks, playoffSize, winnerSnowflake);
     await saveNewWeeks(totalWeeks, season);
     await saveBackfillStandings(season, teamSnowflakes);
   }
