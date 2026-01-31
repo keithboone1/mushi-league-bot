@@ -479,10 +479,10 @@ async function backfillPlayer(interaction) {
     const pickedUpWeek = interaction.options.getNumber("picked_up_week");
     const stars = interaction.options.getNumber("stars");
 
-    const { id: teamId } = await loadTeamFromSnowflake(teamSnowflake);
-    const { id: roleId } = await loadRoleFromSnowflake(roleSnowflake);
-    const { id: playerId } = await loadPlayerFromUsername(playerName);
-    const { id: rosterSpotId } = await loadPlayerOnRoster(season, playerId);
+    const teamId = (await loadTeamFromSnowflake(teamSnowflake))?.id;
+    const roleId = (await loadRoleFromSnowflake(roleSnowflake))?.id;
+    const playerId = (await loadPlayerFromUsername(playerName))?.id;
+    const rosterSpotId = (await loadPlayerOnRoster(season, playerId))?.id;
 
     return {
       season,
@@ -502,7 +502,7 @@ async function backfillPlayer(interaction) {
     let failures = [],
       prompts = [];
 
-    if (!teamId) {
+    if (teamId === undefined) {
       failures.push("Didn't find input team.");
     }
 
@@ -539,7 +539,7 @@ async function backfillPlayer(interaction) {
 
     if (!playerId) {
       await saveNewPlayer(undefined, playerName, undefined);
-      playerId = await loadPlayerFromUsername(players[i]);
+      playerId = await loadPlayerFromUsername(playerName);
     }
 
     await saveBackfillPlayer(
