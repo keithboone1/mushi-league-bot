@@ -692,19 +692,19 @@ async function backfillRoster(interaction) {
     for (const i in captains) {
       if (!captainIds[i]) {
         await saveNewPlayer(undefined, captains[i], undefined);
-        captainIds[i] = await loadPlayerFromUsername(captains[i]);
+        captainIds[i] = (await loadPlayerFromUsername(captains[i])).id;
       }
     }
 
     if (coach && !coachId) {
       await saveNewPlayer(undefined, coach, undefined);
-      coachId = await loadPlayerFromUsername(coach);
+      coachId = (await loadPlayerFromUsername(coach)).id;
     }
 
     for (const i in players) {
       if (!playerIds[i]) {
         await saveNewPlayer(undefined, players[i], undefined);
-        playerIds[i] = await loadPlayerFromUsername(players[i]);
+        playerIds[i] = (await loadPlayerFromUsername(players[i])).id;
       }
     }
 
