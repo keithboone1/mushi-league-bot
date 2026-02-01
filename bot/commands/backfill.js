@@ -622,7 +622,7 @@ async function backfillRoster(interaction) {
     );
 
     const { id: teamId } = await loadTeamFromSnowflake(teamSnowflake);
-    const { alreadyFull } = await loadExistingRoster(season, teamSnowflake);
+    const alreadyFull = (await loadExistingRoster(season, teamSnowflake))?.alreadyFull;
 
     const captainIds = await Promise.all(
       captains.map(
