@@ -33,7 +33,7 @@ export async function saveBackfillSeason(season, length, playoffSize, winner) {
   const totalWeeks = length + Math.ceil(Math.log2(playoffSize));
 
   await db.run(
-    "INSERT INTO season (number, current_week, regular_weeks, playoff_size, winner) VALUES (?, ?, ?, ?, SELECT id FROM team WHERE discord_snowflake = ?)",
+    "INSERT INTO season (number, current_week, regular_weeks, playoff_size, winner) VALUES (?, ?, ?, ?, (SELECT id FROM team WHERE discord_snowflake = ?))",
     season,
     totalWeeks,
     length,
