@@ -24,6 +24,7 @@ import {
   loadOnePairing,
   savePairingResult,
   saveLineupSubmission,
+  loadOnePairingFromId,
 } from "../../database/pairing.js";
 import {
   loadMatchupForTeam,
@@ -928,10 +929,10 @@ async function backfillResult(interaction) {
 
     const player = await loadPlayerFromUsername(winner);
 
-    const pairing = await loadOnePairing(
+    const pairing = await loadOnePairingFromId(
       season,
       week,
-      player.discord_snowflake,
+      player.id,
     );
 
     if (!pairing) {

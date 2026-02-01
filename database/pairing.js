@@ -60,6 +60,27 @@ export async function loadOnePairing(season, week, playerSnowflake) {
   return await db.get(query, season, season, playerSnowflake, playerSnowflake, week, season);
 }
 
+export async function loadOnePairingFromId(season, week, playerId) {
+  const query =
+    "SELECT pairing.id, pairing.winner, pairing.dead, pairing.slot, pairing.predictions_message, \
+                matchup.predictions_message AS matchupPrediction, matchup.schedule_message, matchup.room, (predictedPairings.pairing IS NOT NULL) AS predictionsSaved, \
+                leftPlayer.id AS leftPlayerId, leftPlayer.discord_snowflake AS leftPlayerSnowflake, leftPlayer.name AS leftPlayerName, leftTeam.discord_snowflake AS leftTeamSnowflake, leftTeam.emoji AS leftEmoji, \
+                rightPlayer.id AS rightPlayerId, rightPlayer.discord_snowflake AS rightPlayerSnowflake, rightPlayer.name AS rightPlayerName, rightTeam.discord_snowflake AS rightTeamSnowflake, rightTeam.emoji AS rightEmoji FROM pairing \
+         INNER JOIN player AS leftPlayer ON leftPlayer.id = pairing.left_player \
+         INNER JOIN roster AS leftRoster ON leftRoster.player = leftPlayer.id AND leftRoster.season = ? \
+         INNER JOIN team AS leftTeam ON leftTeam.id = leftRoster.team \
+         INNER JOIN player AS rightPlayer ON rightPlayer.id = pairing.right_player \
+         INNER JOIN roster AS rightRoster ON rightRoster.player = rightPlayer.id AND rightRoster.season = ? \
+         INNER JOIN team AS rightTeam ON rightTeam.id = rightRoster.team \
+         INNER JOIN matchup ON matchup.id = pairing.matchup \
+         INNER JOIN week ON week.id = matchup.week \
+         LEFT JOIN (SELECT DISTINCT pairing FROM prediction) AS predictedPairings ON pairing.id = predictedPairings.pairing \
+         WHERE (rightPlayer.id = ? OR leftPlayer.id = ?) \
+             AND week.number = ? AND week.season = ?";
+
+  return await db.get(query, season, season, playerId, playerId, week, season);
+}
+
 export async function loadAllPairingResults(season, week) {
   const query =
     "SELECT winningPlayer.id AS winningId, winningPlayer.stars AS winningStars, winningPlayer.team AS winningTeam, \
