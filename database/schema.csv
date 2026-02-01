@@ -148,10 +148,10 @@ CREATE TABLE IF NOT EXISTS "roster" (
 	"retained"	INTEGER NOT NULL DEFAULT 0,
 	"picked_up_week"	INTEGER,
 	"dropped_week"	INTEGER,
-	UNIQUE("season","player"),
-	FOREIGN KEY("player") REFERENCES "player"("id"),
-	FOREIGN KEY("season") REFERENCES "season"("number"),
 	FOREIGN KEY("team") REFERENCES "team"("id"),
+	FOREIGN KEY("season") REFERENCES "season"("number"),
+	FOREIGN KEY("player") REFERENCES "player"("id"),
 	FOREIGN KEY("role") REFERENCES "role"("id"),
+	UNIQUE("season","team","player"),
 	PRIMARY KEY("id" AUTOINCREMENT)
 );
