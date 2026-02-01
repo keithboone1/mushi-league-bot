@@ -2,7 +2,7 @@ import { db } from "./database.js";
 
 export async function saveDropAllPlayers() {
   await db.run(
-    "UPDATE player SET active = false, retain_rights = team, team = NULL, role = NULL"
+    "UPDATE player SET active = false, retain_rights = team, team = NULL, role = NULL",
   );
 }
 
@@ -10,7 +10,7 @@ export async function saveStarPointsToRatings(season) {
   await db.run(
     "UPDATE player SET stars = MAX(MIN(player.stars + (pstat.star_points / 100.0), 5), 1) \
                   FROM pstat WHERE pstat.player = player.id AND pstat.season = ?",
-    season
+    season,
   );
 }
 
@@ -19,7 +19,7 @@ export async function saveNewPlayer(snowflake, name, stars) {
     `INSERT INTO player (name, discord_snowflake, stars) VALUES (?, ?, ?)`,
     name,
     snowflake,
-    stars
+    stars,
   );
 }
 
@@ -30,16 +30,25 @@ export async function savePlayerChange(
   team,
   role,
   active,
-  season
+  season,
+  currentWeek,
 ) {
   let updatePlayerQuery = `UPDATE player SET name = '${name}', stars = ${stars}, team = ${
     team ?? null
   }, role = ${role ?? null}, active = ${active} WHERE id = ${id};`;
-  if (team != null) {
+
+  if (active) {
+    const pickedUpWeek =
+      team == null || currentWeek === 0 ? null : currentWeek + 1;
+    const droppedWeek = team != null || currentWeek === 0 ? null : currentWeek;
     const isDraftNotStartedYetSubquery = `SELECT count(id) = 0 FROM draft WHERE season = ${season}`;
-    updatePlayerQuery += `INSERT INTO roster (season, player, team, role, retained) VALUES (${season}, ${id}, ${team}, ${role}, (${isDraftNotStartedYetSubquery})) ON CONFLICT DO UPDATE SET team = ${team}, role = ${role};`;
+    updatePlayerQuery += `INSERT INTO roster (season, player, team, role, retained, picked_up_week, dropped_week)
+       VALUES (${season}, ${id}, ${team}, ${role}, (${isDraftNotStartedYetSubquery}), ${pickedUpWeek}, ${droppedWeek}) ON CONFLICT DO UPDATE SET team = ${team}, role = ${role};`;
+  } else {
+    updatePlayerQuery += `DELETE FROM roster WHERE season = ${season} AND player = ${id};`;
   }
-  if (role === 1 || role === 2) {
+
+  if (role === 1 || role === 2 && active) {
     updatePlayerQuery += `INSERT INTO pstat (player, season, stars) VALUES (${id}, ${season}, ${stars}) ON CONFLICT DO UPDATE SET stars = ${stars};`;
   }
 
@@ -53,7 +62,7 @@ export async function loadAllActivePlayers() {
 export async function loadAllPlayersOnTeam(teamId) {
   return await db.all(
     "SELECT discord_snowflake FROM player WHERE player.team = ?",
-    teamId
+    teamId,
   );
 }
 
@@ -102,7 +111,7 @@ export async function loadTeamInStarOrder(teamSnowflake) {
 export async function loadPlayersOnTeamInStarOrder(teamId) {
   return await db.all(
     "SELECT id FROM player WHERE team = ? AND role != 3 ORDER BY stars DESC",
-    teamId
+    teamId,
   );
 }
 
@@ -110,19 +119,19 @@ export async function loadRosterSize(teamId, captainOnly) {
   if (captainOnly) {
     return await db.get(
       "SELECT 1 AS size, stars FROM player WHERE team = ? AND role = 2 ORDER BY stars DESC LIMIT 1",
-      teamId
+      teamId,
     );
   } else
     return await db.get(
       "SELECT COUNT(stars) AS size, SUM(stars) AS stars FROM player WHERE team = ? AND role != 3",
-      teamId
+      teamId,
     );
 }
 
 export async function loadUndraftedPlayers(maxStars) {
   return await db.all(
     "SELECT name, stars, discord_snowflake FROM player WHERE team IS NULL AND active = 1 AND stars <= ? ORDER BY stars DESC, LOWER(name) ASC",
-    maxStars
+    maxStars,
   );
 }
 
@@ -130,7 +139,7 @@ export async function loadPlayersForSubstitution(
   season,
   week,
   replacedPlayerSnowflake,
-  newPlayerSnowflake
+  newPlayerSnowflake,
 ) {
   const query =
     'SELECT player.id, player.stars, player.name, player.discord_snowflake, team.discord_snowflake AS teamSnowflake, role.name AS roleName, \
@@ -150,7 +159,7 @@ export async function loadPlayersForSubstitution(
     season,
     week,
     replacedPlayerSnowflake,
-    newPlayerSnowflake
+    newPlayerSnowflake,
   );
 }
 
