@@ -76,6 +76,12 @@ export const BACKFILL_COMMAND = {
             .setRequired(true),
         )
         .addRoleOption((option) =>
+          option
+            .setName("winner")
+            .setDescription("winning team")
+            .setRequired(true),
+        )
+        .addRoleOption((option) =>
           option.setName("team1").setDescription("team1"),
         )
         .addRoleOption((option) =>
@@ -116,12 +122,6 @@ export const BACKFILL_COMMAND = {
         )
         .addRoleOption((option) =>
           option.setName("team14").setDescription("team14"),
-        )
-        .addRoleOption((option) =>
-          option
-            .setName("winner")
-            .setDescription("winning team")
-            .setRequired(true),
         ),
     )
     .addSubcommand((subcommand) =>
