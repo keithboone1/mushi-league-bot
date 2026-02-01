@@ -449,7 +449,8 @@ async function backfillSeason(interaction) {
   }
 
   async function onConfirm(data) {
-    const { season, numWeeks, playoffSize, teamSnowflakes, winnerSnowflake } = data;
+    const { season, numWeeks, playoffSize, teamSnowflakes, winnerSnowflake } =
+      data;
 
     const totalWeeks = numWeeks + Math.ceil(Math.log2(playoffSize));
 
@@ -622,7 +623,8 @@ async function backfillRoster(interaction) {
     );
 
     const { id: teamId } = await loadTeamFromSnowflake(teamSnowflake);
-    const alreadyFull = (await loadExistingRoster(season, teamSnowflake))?.alreadyFull;
+    const alreadyFull = (await loadExistingRoster(season, teamSnowflake))
+      ?.alreadyFull;
 
     const captainIds = await Promise.all(
       captains.map(
@@ -837,10 +839,9 @@ async function backfillLineup(interaction) {
       roster.find((p) => p.name === player),
     );
 
-    const { alreadyFull } = await loadExistingPairingForMatchup(
-      matchup.id,
-      roster[0].teamId,
-    );
+    const alreadyFull = (
+      await loadExistingPairingForMatchup(matchup.id, roster[0].teamId)
+    )?.alreadyFull;
 
     return {
       season,
