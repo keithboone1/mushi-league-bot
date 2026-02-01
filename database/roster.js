@@ -11,7 +11,7 @@ export async function saveBackfillPlayer(
 ) {
   const updatePstatQuery = `INSERT INTO pstat (season, player, stars) VALUES (?, ?, ?) ON CONFLICT DO UPDATE SET stars = EXCLUDED.stars;`;
 
-  const updateRosterQuery = `INSERT INTO roster (season, player, team, role, picked_up_week, dropped_week) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT DO UPDATE SET team = EXCLUDED.team, role = EXCLUDED.role, picked_up_week = EXCLUDED.picked_up_week, dropped_week = EXCLUDED.dropped_week;`;
+  const updateRosterQuery = `INSERT INTO roster (season, player, team, role, picked_up_week, dropped_week) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT DO UPDATE SET role = EXCLUDED.role, picked_up_week = EXCLUDED.picked_up_week, dropped_week = EXCLUDED.dropped_week;`;
 
   await db.run(updatePstatQuery, season, playerId, stars);
   await db.run(
@@ -51,7 +51,7 @@ export async function saveBackfillRoster(
     ...(coach ? [`\n(${season}, ${coach}, ${teamId}, 3)`] : []),
   ].join(",\n");
 
-  const updateRosterQuery = `INSERT INTO roster (season, player, team, role) VALUES\n${rosterValues}\nON CONFLICT DO UPDATE SET team = EXCLUDED.team, role = EXCLUDED.role;`;
+  const updateRosterQuery = `INSERT INTO roster (season, player, team, role) VALUES\n${rosterValues}\nON CONFLICT DO UPDATE SET role = EXCLUDED.role;`;
 
   await db.run(updatePstatQuery);
   await db.run(updateRosterQuery);

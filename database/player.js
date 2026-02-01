@@ -37,18 +37,18 @@ export async function savePlayerChange(
     team ?? null
   }, role = ${role ?? null}, active = ${active} WHERE id = ${id};`;
 
-  if (active) {
+  if (active === 0 || (team == null && currentWeek === 0)) {
+    updatePlayerQuery += `DELETE FROM roster WHERE season = ${season} AND player = ${id};`;
+  } else {
     const pickedUpWeek =
       team == null || currentWeek === 0 ? null : currentWeek + 1;
     const droppedWeek = team != null || currentWeek === 0 ? null : currentWeek;
     const isDraftNotStartedYetSubquery = `SELECT count(id) = 0 FROM draft WHERE season = ${season}`;
     updatePlayerQuery += `INSERT INTO roster (season, player, team, role, retained, picked_up_week, dropped_week)
-       VALUES (${season}, ${id}, ${team}, ${role}, (${isDraftNotStartedYetSubquery}), ${pickedUpWeek}, ${droppedWeek}) ON CONFLICT DO UPDATE SET team = ${team}, role = ${role};`;
-  } else {
-    updatePlayerQuery += `DELETE FROM roster WHERE season = ${season} AND player = ${id};`;
+       VALUES (${season}, ${id}, ${team}, ${role}, (${isDraftNotStartedYetSubquery}), ${pickedUpWeek}, ${droppedWeek}) ON CONFLICT DO UPDATE SET role = EXCLUDED.role, picked_up_week = EXCLUDED.picked_up_week, dropped_week = EXCLUDED.dropped_week;`;
   }
 
-  if (role === 1 || role === 2 && active) {
+  if (role === 1 || (role === 2 && active)) {
     updatePlayerQuery += `INSERT INTO pstat (player, season, stars) VALUES (${id}, ${season}, ${stars}) ON CONFLICT DO UPDATE SET stars = ${stars};`;
   }
 
