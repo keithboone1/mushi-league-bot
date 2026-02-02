@@ -44,20 +44,20 @@ export const DRAFT_COMMAND = {
       subcommand
         .setName("list")
         .setDescription(
-          "shows all players you can draft in descending star order"
+          "shows all players you can draft in descending star order",
         )
         .addBooleanOption((option) =>
           option
             .setName("public")
-            .setDescription("whether to show the list publicly")
+            .setDescription("whether to show the list publicly"),
         )
         .addBooleanOption((option) =>
           option
             .setName("all")
             .setDescription(
-              "whether to list all players (instead of just those you can draft)"
-            )
-        )
+              "whether to list all players (instead of just those you can draft)",
+            ),
+        ),
     )
     .addSubcommand((subcommand) =>
       subcommand
@@ -67,13 +67,13 @@ export const DRAFT_COMMAND = {
           option
             .setName("player")
             .setDescription("player to draft")
-            .setRequired(true)
+            .setRequired(true),
         )
         .addBooleanOption((option) =>
           option
             .setName("override")
-            .setDescription("true if you are drafting for another team")
-        )
+            .setDescription("true if you are drafting for another team"),
+        ),
     )
     .addSubcommand((subcommand) =>
       subcommand
@@ -82,8 +82,8 @@ export const DRAFT_COMMAND = {
         .addRoleOption((option) =>
           option
             .setName("team")
-            .setDescription("team to withdraw, defaults to your own")
-        )
+            .setDescription("team to withdraw, defaults to your own"),
+        ),
     )
     .addSubcommand((subcommand) =>
       subcommand
@@ -93,18 +93,18 @@ export const DRAFT_COMMAND = {
           option
             .setName("order")
             .setDescription(
-              'order of team picks in format "5,4,1,2,3,6" (this is ghetto af)'
+              'order of team picks in format "5,4,1,2,3,6" (this is ghetto af)',
             )
-            .setRequired(true)
-        )
+            .setRequired(true),
+        ),
     )
     .addSubcommand((subcommand) =>
-      subcommand.setName("start").setDescription("starts the draft")
+      subcommand.setName("start").setDescription("starts the draft"),
     )
     .addSubcommand((subcommand) =>
       subcommand
         .setName("finalize")
-        .setDescription("saves rosters, initializes pstats")
+        .setDescription("saves rosters, initializes pstats"),
     ),
 
   async execute(interaction) {
@@ -152,9 +152,12 @@ async function listPlayers(interaction) {
           await maxStarsNext(
             submitter?.teamId,
             (
-              await loadNextPickRoundForTeam(submitter?.teamId, currentSeason.number)
-            ).round
-          )
+              await loadNextPickRoundForTeam(
+                submitter?.teamId,
+                currentSeason.number,
+              )
+            ).round,
+          ),
         );
 
     const availablePlayers = await loadUndraftedPlayers(maxStars);
@@ -174,7 +177,7 @@ async function listPlayers(interaction) {
     const header = listAll
       ? "All available players"
       : `Players available to ${roleMention(
-          teamSnowflake
+          teamSnowflake,
         )} (max stars for next pick: ${maxStars}):\n`;
     return header.concat(prettyDraftList(availablePlayers));
   }
@@ -185,7 +188,7 @@ async function listPlayers(interaction) {
     verifier,
     responseWriter,
     ephemeral,
-    false
+    false,
   );
 }
 
@@ -198,8 +201,8 @@ function prettyDraftList(availablePlayers) {
     "".concat(
       "Stars | Player \n",
       "------|--------\n",
-      availablePlayers.map((player) => prettyTextPlayer(player)).join("\n")
-    )
+      availablePlayers.map((player) => prettyTextPlayer(player)).join("\n"),
+    ),
   );
 }
 
@@ -261,7 +264,7 @@ async function pickPlayer(interaction) {
       : { teamId: submitter.teamId, teamSnowflake: submitter.teamSnowflake };
 
     const maxStars = fixFloat(
-      await maxStarsNext(team.teamId, nextPickTeam.round)
+      await maxStarsNext(team.teamId, nextPickTeam.round),
     );
     let playerData = await loadPlayerFromSnowflake(player.id);
 
@@ -290,48 +293,48 @@ async function pickPlayer(interaction) {
     if (nextPickTeam.teamId !== team.teamId) {
       failures.push(
         `It's not your pick! It's ${roleMention(
-          nextPickTeam.discord_snowflake
-        )}'s turn`
+          nextPickTeam.discord_snowflake,
+        )}'s turn`,
       );
     }
 
     if (pick.teamId !== null) {
       failures.push(
-        `${userMention(pick.discord_snowflake)} is already on a team!`
+        `${userMention(pick.discord_snowflake)} is already on a team!`,
       );
     }
 
     if (!pick.active) {
       failures.push(
-        `${userMention(pick.discord_snowflake)} is not playing this season!`
+        `${userMention(pick.discord_snowflake)} is not playing this season!`,
       );
     }
 
     if (pick.stars > maxStars) {
       failures.push(
         `${userMention(
-          pick.discord_snowflake
-        )} is too expensive! Your budget: ${maxStars} stars.`
+          pick.discord_snowflake,
+        )} is too expensive! Your budget: ${maxStars} stars.`,
       );
     }
 
     if (override) {
       prompts.push(
         `You're drafting for the ${roleMention(
-          team.teamSnowflake
-        )}, but you aren't on that team.`
+          team.teamSnowflake,
+        )}, but you aren't on that team.`,
       );
     }
 
     prompts.push(
       `Confirm that you want to draft ${userMention(
-        pick.discord_snowflake
-      )} for ${pick.stars} stars.`
+        pick.discord_snowflake,
+      )} for ${pick.stars} stars.`,
     );
 
     const confirmLabel = "Confirm Draft";
     const confirmMessage = `${userMention(
-      pick.discord_snowflake
+      pick.discord_snowflake,
     )} drafted to ${roleMention(team.teamSnowflake)} for ${pick.stars} stars.`;
     const cancelMessage = `${userMention(pick.discord_snowflake)} not drafted.`;
 
@@ -351,7 +354,7 @@ async function pickPlayer(interaction) {
     verifier,
     onConfirm,
     false,
-    false
+    false,
   );
 }
 
@@ -365,7 +368,8 @@ async function recordDraftPick(draftId, team, pick) {
     team.teamId,
     1,
     pick.active,
-    currentSeason.number
+    currentSeason.number,
+    currentSeason.current_week,
   );
 }
 
@@ -376,7 +380,7 @@ async function notifyAfterPick() {
     const draftChannel = await channels.fetch(process.env.draftChannelId);
     await draftChannel.send({
       content: `${roleMention(
-        process.env.ownerRoleId
+        process.env.ownerRoleId,
       )} all players have been drafted. After confirming the #registration channel has nobody left, run /draft finalize.`,
       allowedMentions: { parse: ["roles"] },
     });
@@ -388,7 +392,7 @@ async function notifyAfterPick() {
 async function pingNextTeam() {
   const nextPickTeam = await loadNextPickTeam(currentSeason.number);
   const maxStars = fixFloat(
-    await maxStarsNext(nextPickTeam.teamId, nextPickTeam.round)
+    await maxStarsNext(nextPickTeam.teamId, nextPickTeam.round),
   );
   await sendDraftPing(nextPickTeam.discord_snowflake, maxStars);
 }
@@ -428,7 +432,8 @@ async function withdrawTeam(interaction) {
     const rosterSize = (await loadRosterSize(teamData.id, false)).size;
 
     const teamIsUp =
-      (await loadNextPickTeam(currentSeason.number)).discord_snowflake === teamData.teamSnowflake;
+      (await loadNextPickTeam(currentSeason.number)).discord_snowflake ===
+      teamData.teamSnowflake;
 
     return { submitter, team: teamData, rosterSize, overriddenTeam, teamIsUp };
   }
@@ -441,31 +446,31 @@ async function withdrawTeam(interaction) {
     if (rosterSize < currentSeason.min_roster) {
       failures.push(
         `You can't withdraw ${roleMention(
-          team.discord_snowflake
-        )} because they have less than ${currentSeason.min_roster} players.`
+          team.discord_snowflake,
+        )} because they have less than ${currentSeason.min_roster} players.`,
       );
     }
 
     if (overriddenTeam) {
       prompts.push(
         `You are withdrawing ${roleMention(
-          team.discord_snowflake
-        )} but you are not on that team.`
+          team.discord_snowflake,
+        )} but you are not on that team.`,
       );
     }
 
     prompts.push(
       `Do you really want to withdraw ${roleMention(
-        team.discord_snowflake
-      )} from the draft? This can't be undone.`
+        team.discord_snowflake,
+      )} from the draft? This can't be undone.`,
     );
 
     const confirmLabel = "Confirm Withdrawal";
     const confirmMessage = `${roleMention(
-      team.discord_snowflake
+      team.discord_snowflake,
     )} withdrawn from the draft.`;
     const cancelMessage = `${roleMention(
-      team.discord_snowflake
+      team.discord_snowflake,
     )} not withdrawn.`;
 
     return [failures, prompts, confirmLabel, confirmMessage, cancelMessage];
@@ -485,7 +490,7 @@ async function withdrawTeam(interaction) {
     verifier,
     onConfirm,
     false,
-    false
+    false,
   );
 }
 
@@ -498,12 +503,12 @@ async function initDraft(interaction) {
     const order = interaction.options.getString("order").split(",");
     const teams = await loadTeamsInLimitedPickOrder();
     const teamOrder = order.map((id) =>
-      teams.find((team) => team.id === Number(id))
+      teams.find((team) => team.id === Number(id)),
     );
 
     const seasonSize = await getSeasonSize();
     const flooredPlayersPerTeam = Math.floor(
-      seasonSize.playerCount / teams.length
+      seasonSize.playerCount / teams.length,
     );
     const remainder = seasonSize.playerCount % teams.length;
     const minRoster =
@@ -518,7 +523,7 @@ async function initDraft(interaction) {
       Math.ceil(
         (10 *
           (seasonSize.starCount + 0.5 * teams.length - 1.5 * leftoverPlayers)) /
-          teams.length
+          teams.length,
       ) / 10;
     const maxStars = draftCap + 1.5 * OVERFLOW_SIZE;
 
@@ -548,18 +553,18 @@ async function initDraft(interaction) {
     prompts.push(
       `Limited round order: ${teams
         .map((team) => roleMention(team.discord_snowflake))
-        .join(", ")}`
+        .join(", ")}`,
     );
     prompts.push(
       `Normal order: ${teamOrder
         .map((team) => roleMention(team.discord_snowflake))
-        .join(", ")}`
+        .join(", ")}`,
     );
     prompts.push(
       `Season numbers: Min roster size ${minRoster};` +
         ` draft cap ${draftCap} + 1.5 per player over min;` +
         ` limited round stars ${r1stars};` +
-        ` min lineup size ${minLineup}`
+        ` min lineup size ${minLineup}`,
     );
 
     const confirmLabel = "Confirm Initialize Draft";
@@ -586,7 +591,7 @@ async function initDraft(interaction) {
       maxRoster,
       maxStars,
       r1stars,
-      minLineup
+      minLineup,
     );
 
     await setCurrentSeason();
@@ -595,7 +600,7 @@ async function initDraft(interaction) {
       currentSeason.number,
       currentSeason.max_roster,
       teams.map((team) => team.id),
-      teamOrder.map((team) => team.id)
+      teamOrder.map((team) => team.id),
     );
   }
 
@@ -605,7 +610,7 @@ async function initDraft(interaction) {
     verifier,
     onConfirm,
     false,
-    false
+    false,
   );
 }
 
@@ -622,7 +627,7 @@ async function startDraft(interaction) {
     }
 
     const maxStars = fixFloat(
-      await maxStarsNext(firstPickTeam.teamId, firstPickTeam.round)
+      await maxStarsNext(firstPickTeam.teamId, firstPickTeam.round),
     );
 
     return { firstPickTeam, maxStars };
@@ -649,7 +654,7 @@ async function startDraft(interaction) {
     verifier,
     onConfirm,
     false,
-    false
+    false,
   );
 }
 
@@ -657,7 +662,7 @@ async function sendDraftPing(teamSnowflake, maxStars) {
   const draftChannel = await channels.fetch(process.env.draftChannelId);
   await draftChannel.send({
     content: `${roleMention(
-      teamSnowflake
+      teamSnowflake,
     )}, your pick. Max stars is ${maxStars}.`,
     allowedMentions: { parse: ["roles"] },
   });
