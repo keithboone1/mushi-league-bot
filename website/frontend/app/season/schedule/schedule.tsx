@@ -4,18 +4,33 @@ import { teamColorText, weekName } from "util/util";
 import { format } from "date-fns";
 import { NavLink } from "react-router";
 
-export default function Schedule({ loaderData }: Route.ComponentProps) {
+export default function Schedule({ params, loaderData }: Route.ComponentProps) {
+  const padToLength3 = (games: string[]): string[] =>
+    games.length >= 3
+      ? games
+      : [...games, ...new Array(3 - games.length).fill("")];
+
+  const replayIsWiped = (weekNumber: number, replayUrl: string) =>
+    (parseInt(params.season) < 15 ||
+      (parseInt(params.season) === 15 && weekNumber < 2)) &&
+    !replayUrl.includes("smogtours");
+
   return (
     <div className="flex flex-col gap-3">
-      {loaderData.weeks.map((week, i) => (
+      {loaderData.weeks.map((week, weekNumber) => (
         <details
-          {...(loaderData.currentWeek === null || loaderData.currentWeek <= i + 1
+          {...(loaderData.currentWeek === null ||
+          loaderData.currentWeek <= weekNumber + 1
             ? { open: true }
             : {})}
         >
           <summary>
             <h2 className="inline">
-              {weekName(i + 1, loaderData.regularWeeks, loaderData.playoffSize)}
+              {weekName(
+                weekNumber + 1,
+                loaderData.regularWeeks,
+                loaderData.playoffSize,
+              )}
             </h2>
           </summary>
 
@@ -27,7 +42,7 @@ export default function Schedule({ loaderData }: Route.ComponentProps) {
                   <div
                     className={twJoin(
                       "px-1 whitespace-nowrap",
-                      teamColorText(team.color)
+                      teamColorText(team.color),
                     )}
                     style={{ backgroundColor: team.color }}
                   >
@@ -38,7 +53,7 @@ export default function Schedule({ loaderData }: Route.ComponentProps) {
             </div>
           )}
 
-          <div className="flex gap-3 w-fit flex-wrap" key={i}>
+          <div className="flex gap-3 w-fit flex-wrap" key={weekNumber}>
             {week.matchups.map((matchup) => {
               const { leftWins, rightWins } = matchup.pairings.reduce(
                 (accum, item) => {
@@ -49,7 +64,7 @@ export default function Schedule({ loaderData }: Route.ComponentProps) {
                   }
                   return accum;
                 },
-                { leftWins: 0, rightWins: 0 }
+                { leftWins: 0, rightWins: 0 },
               );
 
               const scoreString = `${leftWins} - ${rightWins}`;
@@ -64,7 +79,7 @@ export default function Schedule({ loaderData }: Route.ComponentProps) {
                       <th
                         className={twJoin(
                           "text-lg font-semibold whitespace-nowrap text-center border border-black",
-                          teamColorText(matchup.leftTeam.color)
+                          teamColorText(matchup.leftTeam.color),
                         )}
                         style={{ backgroundColor: matchup.leftTeam.color }}
                       >
@@ -76,7 +91,7 @@ export default function Schedule({ loaderData }: Route.ComponentProps) {
                       <th
                         className={twJoin(
                           "text-lg font-semibold whitespace-nowrap text-center border border-black",
-                          teamColorText(matchup.rightTeam.color)
+                          teamColorText(matchup.rightTeam.color),
                         )}
                         style={{ backgroundColor: matchup.rightTeam.color }}
                       >
@@ -99,27 +114,26 @@ export default function Schedule({ loaderData }: Route.ComponentProps) {
                             </span>,
                           ]
                         : p.games.length > 0
-                        ? p.games.map((game, i) =>
-                            game.startsWith("http") ? (
-                              <div
-                                key={i}
-                                className="basis-full flex px-2 not-last:border-r"
-                              >
+                        ? padToLength3(p.games).map((game, i) => (
+                            <span
+                              key={i}
+                              className="flex-1 px-2 not-last:border-r text-center"
+                            >
+                              {game.startsWith("http") ? (
                                 <a
-                                  className="basis-full grow text-center text-sm text-[blue] active:text-[purple] underline"
+                                  className={twMerge(
+                                    "text-center text-sm text-[blue] visited:text-[purple] underline",
+                                    replayIsWiped(weekNumber, game) &&
+                                      "text-[red] visited:text-[red]",
+                                  )}
                                   href={game}
                                   target="_blank"
                                 >{`g${i + 1}`}</a>
-                              </div>
-                            ) : (
-                              <span
-                                key={i}
-                                className="basis-full not-last:border-r text-center"
-                              >
-                                {game}
-                              </span>
-                            )
-                          )
+                              ) : (
+                                game
+                              )}
+                            </span>
+                          ))
                         : p.scheduledTime
                         ? [
                             <span key="time" className="basis-full text-center">
@@ -127,19 +141,15 @@ export default function Schedule({ loaderData }: Route.ComponentProps) {
                             </span>,
                           ]
                         : [<span key="blank" />];
-                      while (p.games.length > 0 && gameLinks.length < 3) {
-                        gameLinks.push(
-                          <span key={2} className="basis-full px-2" />
-                        );
-                      }
+
                       return (
-                        <tr key={p.leftPlayer.id}>
+                        <tr key={p.leftPlayer.id} className="border">
                           <td
                             className={twMerge(
                               "text-right border pr-2",
                               p.leftPlayer.won && "bg-green-100",
                               p.leftPlayer.lost && "bg-red-100",
-                              p.dead && "bg-gray-200"
+                              p.dead && "bg-gray-200",
                             )}
                           >
                             <NavLink
@@ -149,15 +159,15 @@ export default function Schedule({ loaderData }: Route.ComponentProps) {
                               {p.leftPlayer.name}
                             </NavLink>
                           </td>
-                          <td className="border-t">
-                            <div className="flex items-center">{gameLinks}</div>
+                          <td className="py-1">
+                            <div className="flex">{gameLinks}</div>
                           </td>
                           <td
                             className={twMerge(
                               "text-left border pl-2",
                               p.rightPlayer.won && "bg-green-100",
                               p.rightPlayer.lost && "bg-red-100",
-                              p.dead && "bg-gray-200"
+                              p.dead && "bg-gray-200",
                             )}
                           >
                             <NavLink
@@ -283,7 +293,7 @@ export async function loader({ params: { season } }: Route.LoaderArgs) {
     }
 
     let matchup = week.matchups.find(
-      (matchup) => matchup.id === item.matchupId
+      (matchup) => matchup.id === item.matchupId,
     );
 
     if (matchup === undefined) {
