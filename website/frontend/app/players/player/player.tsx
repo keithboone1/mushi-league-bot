@@ -62,9 +62,12 @@ export default function Season({
         Return to all players
       </NavLink>
       <h1 className="mb-1">{loaderData[0].playerName}</h1>
-      {loaderData.map((season) => (
+      {loaderData.map((season, i) => (
         <div className="my-6">
-          <h2 id={season.season.toString()}>{`Season ${season.season}`}</h2>
+          {i === 0 ||
+            (loaderData[i - 1].season !== season.season && (
+              <h2 id={season.season.toString()}>{`Season ${season.season}`}</h2>
+            ))}
           <div className="font-medium">
             {season.roleName} on{" "}
             <span
@@ -175,13 +178,19 @@ export async function loader({ params: { playerId } }: Route.LoaderArgs) {
     await fetch(`https://mushileague.gg/api/players/${playerId}`)
   ).json()) as PlayerQuery;
 
-  const pairingsBySeason = rawData.pairings.reduce((accum, pairing) => {
-    accum[pairing.season] = [...(accum[pairing.season] ?? []), pairing];
-    return accum;
-  }, {} as Record<number, PlayerQuery["pairings"]>);
+  const pairingHappenedWithTeam = (
+    pairing: PlayerQuery["pairings"][number],
+    team: PlayerQuery["playerInfo"][number],
+  ) =>
+    pairing.season === team.season &&
+    (team.picked_up_week == null ||
+      pairing.weekNumber >= team.picked_up_week) &&
+    (team.dropped_week == null || pairing.weekNumber <= team.dropped_week);
 
-  return rawData.playerInfo.map((season) => ({
-    ...season,
-    pairings: pairingsBySeason[season.season],
+  return rawData.playerInfo.map((team) => ({
+    ...team,
+    pairings: rawData.pairings.filter((pairing) =>
+      pairingHappenedWithTeam(pairing, team),
+    ),
   }));
 }

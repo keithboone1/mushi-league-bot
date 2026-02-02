@@ -121,9 +121,17 @@ WITH matchup_results AS (
     FROM matchup m
     JOIN week w ON m.week = w.id
     JOIN season s ON w.season = s.number
-    JOIN pairing p ON p.matchup = m.id
-    LEFT JOIN roster r_left ON r_left.player = p.left_player AND r_left.team = m.left_team AND r_left.season = w.season
-    LEFT JOIN roster r_right ON r_right.player = p.right_player AND r_right.team = m.right_team AND r_right.season = w.season
+    JOIN pairing p ON p.matchup = m.id    
+	LEFT JOIN roster r_left ON r_left.player = p.left_player 
+        AND r_left.team = m.left_team 
+        AND r_left.season = w.season
+        AND (r_left.picked_up_week IS NULL OR w.number >= r_left.picked_up_week)
+        AND (r_left.dropped_week IS NULL OR w.number <= r_left.dropped_week)
+    LEFT JOIN roster r_right ON r_right.player = p.right_player 
+        AND r_right.team = m.right_team 
+        AND r_right.season = w.season
+        AND (r_right.picked_up_week IS NULL OR w.number >= r_right.picked_up_week)
+        AND (r_right.dropped_week IS NULL OR w.number <= r_right.dropped_week)
     WHERE p.winner IS NOT NULL
       AND w.season = ?  -- Filter for specific season
       AND w.number <= s.regular_weeks  -- Only count regular season matchups

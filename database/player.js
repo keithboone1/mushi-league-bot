@@ -173,13 +173,13 @@ export async function getSeasonSize() {
 export async function loadPlayerHistory(playerId) {
   const playerInfoQuery =
     "SELECT player.name AS playerName, roster.season, roster.picked_up_week, roster.dropped_week, role.name AS roleName, pstat.stars, pstat.wins, pstat.act_wins, pstat.losses, pstat.act_losses, pstat.ties, pstat.star_points, team.id AS teamId, team.name AS teamName, team.color \
-     FROM player \
-     INNER JOIN roster ON roster.player = player.id \
+     FROM roster \
+     INNER JOIN player ON roster.player = player.id \
      LEFT JOIN pstat ON pstat.player = player.id AND pstat.season = roster.season \
      INNER JOIN team ON team.id = roster.team \
      INNER JOIN role ON role.id = roster.role \
      WHERE player.id = ? \
-     ORDER BY roster.season DESC";
+     ORDER BY roster.season DESC, roster.picked_up_week DESC";
 
   const pairingQuery =
     "SELECT slot, game1, game2, game3, game4, game5, pairing.winner, dead, week.season, week.number as weekNumber, season.regular_weeks, season.playoff_size, opponent.id AS opponentId, opponent.name AS opponentName, opponentPstat.stars AS opponentStars, opponentTeam.name AS opponentTeam, opponentTeam.color AS opponentTeamColor \
@@ -188,6 +188,7 @@ export async function loadPlayerHistory(playerId) {
      INNER JOIN week ON matchup.week = week.id \
      INNER JOIN season ON season.number = week.season \
      INNER JOIN player AS opponent ON opponent.id = IIF(pairing.left_player = ?, pairing.right_player, pairing.left_player) \
+   	 INNER JOIN roster ON roster.player = ? AND roster.season = season.number AND (roster.dropped_week IS NULL OR roster.dropped_week >= week.number) AND (roster.picked_up_week IS NULL OR roster.picked_up_week <= week.number) \
      INNER JOIN pstat AS opponentPstat ON opponentPstat.player = opponent.id AND opponentPstat.season = week.season \
      INNER JOIN team AS opponentTeam ON opponentTeam.id = IIF(pairing.left_player = ?, matchup.right_team, matchup.left_team) \
      WHERE (pairing.left_player = ? OR pairing.right_player = ?) \
@@ -196,7 +197,7 @@ export async function loadPlayerHistory(playerId) {
 
   const [playerInfo, pairings] = await Promise.all([
     db.all(playerInfoQuery, playerId),
-    db.all(pairingQuery, playerId, playerId, playerId, playerId),
+    db.all(pairingQuery, playerId, playerId, playerId, playerId, playerId),
   ]);
 
   return { playerInfo, pairings };
