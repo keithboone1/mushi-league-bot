@@ -78,5 +78,6 @@ app.get("/api/players/:id", async (req, res) => {
 });
 
 app.listen(port, async () => {
+  console.log(`Express server running on port ${port}...`);
   await openDb();
 });
