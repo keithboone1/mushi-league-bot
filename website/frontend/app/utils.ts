@@ -7,5 +7,9 @@ export function getApiHost(url: URL): string {
             return !!url.port ? ':' + url.port : '';
         }
     }
+    // React Router won't properly check for X-Forwarded-For headers, so we have to assume it ourselves
+    if (process.env.NODE_ENV !== 'development') {
+        url.protocol = 'https:';
+    }
     return `${url.protocol}//${url.hostname}${apiPort()}`;
 }
