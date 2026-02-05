@@ -1,5 +1,6 @@
 import { NavLink } from "react-router";
 import type { Route } from "./+types/players";
+import { getApiHost } from "~/utils";
 
 export default function Players({ loaderData }: Route.ComponentProps) {
   return (
@@ -56,8 +57,9 @@ type PlayersQuery = {
   stars: number;
 }[];
 
-export async function loader({ params: { season } }: Route.LoaderArgs) {
+export async function loader({ params: { season }, request }: Route.LoaderArgs) {
+  const url = new URL(request.url);
   return (await (
-    await fetch(`https://mushileague.gg/api/season/${season}/players`)
+    await fetch(`${getApiHost(url)}/api/season/${season}/players`)
   ).json()) as PlayersQuery;
 }

@@ -3,6 +3,7 @@ import { twJoin, twMerge } from "tailwind-merge";
 import { ArrowLeft } from "lucide-react";
 import type { Route } from "./+types/player";
 import { teamColorText, weekName } from "util/util";
+import { getApiHost } from "~/utils";
 
 type PlayerQuery = {
   playerInfo: {
@@ -173,9 +174,10 @@ export default function Season({
   );
 }
 
-export async function loader({ params: { playerId } }: Route.LoaderArgs) {
+export async function loader({ params: { playerId }, request }: Route.LoaderArgs) {
+  const url = new URL(request.url);
   const rawData = (await (
-    await fetch(`https://mushileague.gg/api/players/${playerId}`)
+    await fetch(`${getApiHost(url)}/api/players/${playerId}`)
   ).json()) as PlayerQuery;
 
   const pairingHappenedWithTeam = (

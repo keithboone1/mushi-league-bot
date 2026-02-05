@@ -2,6 +2,7 @@ import { teamColorText, teamInitials } from "util/util";
 import type { Route } from "./+types/draft";
 import { twJoin } from "tailwind-merge";
 import { NavLink } from "react-router";
+import { getApiHost } from "~/utils";
 
 export default function Draft({ loaderData }: Route.ComponentProps) {
   const { captains, retains, picks, teamData } = loaderData;
@@ -244,9 +245,10 @@ type DraftQuery = {
   };
 };
 
-export async function loader({ params: { season } }: Route.LoaderArgs) {
+export async function loader({ params: { season }, request }: Route.LoaderArgs) {
+  const url = new URL(request.url);
   const rawData = (await (
-    await fetch(`https://mushileague.gg/api/season/${season}/draft`)
+    await fetch(`${getApiHost(url)}/api/season/${season}/draft`)
   ).json()) as DraftQuery;
 
   const maxRoundLength = rawData.picks.reduce(
