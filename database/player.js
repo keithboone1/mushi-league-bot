@@ -25,8 +25,8 @@ export async function saveNewPlayer(snowflake, name, stars) {
 
 export async function savePlayerChange(
   id,
-  discord_snowflake,
   name,
+  discord_snowflake,
   stars,
   team,
   role,
