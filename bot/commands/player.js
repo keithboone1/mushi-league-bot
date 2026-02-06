@@ -270,7 +270,7 @@ async function renamePlayer(interaction) {
   );
 }
 
-async function renamePlayer(interaction) {
+async function changePlayerDiscord(interaction) {
   async function dataCollector(interaction) {
     const playerName = interaction.options.getString("player_name");
     const newDiscordId = interaction.options.getUser("new_discord").id;
