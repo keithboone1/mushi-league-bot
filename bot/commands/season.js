@@ -115,7 +115,10 @@ export const SEASON_COMMAND = {
           option.setName("role").setDescription("team role").setRequired(true),
         )
         .addStringOption((option) =>
-          option.setName("emoji").setDescription("team emoji").setRequired(true),
+          option
+            .setName("emoji")
+            .setDescription("team emoji")
+            .setRequired(true),
         ),
     ),
 
@@ -161,7 +164,6 @@ async function newSeason(interaction) {
   async function onConfirm(data) {
     const { length, playoffSize } = data;
     await dropAllPlayers();
-    await saveStarPointsToRatings(currentSeason.number);
     await makeSeasonAndWeeks(currentSeason.number + 1, length, playoffSize);
     await makeRegSeasonPairings(currentSeason.number + 1, length);
     await saveInitialStandings(currentSeason.number + 1);
@@ -522,6 +524,7 @@ async function declareWinner(winner) {
   await announceWinner(winningTeamSnowflake);
   await makeWinnerRole(winner, winningTeamSnowflake);
   await saveWinner(currentSeason.number, winner);
+  await saveStarPointsToRatings(currentSeason.number);
 }
 
 async function announceWinner(winner) {

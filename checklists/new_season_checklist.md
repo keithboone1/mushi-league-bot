@@ -1,4 +1,4 @@
-1. Update teams table (currently a manual process)
+1. Update teams table with `/season add_team`
 
 2. Double check the room IDs in the .env
 
