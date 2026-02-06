@@ -55,6 +55,23 @@ export const PLAYER_COMMAND = {
     )
     .addSubcommand((subcommand) =>
       subcommand
+        .setName("change_discord")
+        .setDescription("Change a player's discord snowflake")
+        .addStringOption((option) =>
+          option
+            .setName("player_name")
+            .setDescription("Player's name in the bot")
+            .setRequired(true),
+        )
+        .addUserOption((option) =>
+          option
+            .setName("new_discord")
+            .setDescription("new discord @")
+            .setRequired(true),
+        ),
+    )
+    .addSubcommand((subcommand) =>
+      subcommand
         .setName("rate")
         .setDescription("Sets a star rating on a player already in the pool")
         .addUserOption((option) =>
@@ -128,6 +145,9 @@ export const PLAYER_COMMAND = {
         break;
       case "rename":
         await renamePlayer(interaction);
+        break;
+      case "change_discord":
+        await changePlayerDiscord(interaction);
         break;
       case "rate":
         await ratePlayer(interaction);
@@ -230,6 +250,66 @@ async function renamePlayer(interaction) {
     await savePlayerChange(
       existingPlayer.id,
       name,
+      existingPlayer.discord_snowflake,
+      existingPlayer.stars,
+      existingPlayer.teamId,
+      existingPlayer.roleId,
+      existingPlayer.active,
+      currentSeason.number,
+      currentSeason.current_week,
+    );
+  }
+
+  await baseHandler(
+    interaction,
+    dataCollector,
+    verifier,
+    onConfirm,
+    false,
+    false,
+  );
+}
+
+async function renamePlayer(interaction) {
+  async function dataCollector(interaction) {
+    const playerName = interaction.options.getString("player_name");
+    const newDiscordId = interaction.options.getUser("new_discord").id;
+
+    const existingPlayer = await loadPlayerFromUsername(playerName);
+
+    if (!existingPlayer) {
+      return {
+        failure: `${playerName} is not in the pool; use /player add instead`,
+      };
+    }
+
+    return { playerName, newDiscordId, existingPlayer };
+  }
+
+  function verifier(data) {
+    const { playerName, newDiscordId, existingPlayer } = data;
+    let failures = [],
+      prompts = [];
+
+    if (existingPlayer.discord_snowflake === newDiscordId) {
+      failures.push(
+        `${userMention(existingPlayer.discord_snowflake)} is already ${userMention(newDiscordId)} in the bot`,
+      );
+    }
+
+    const confirmLabel = "Confirm Change Discord";
+    const confirmMessage = `${playerName}'s discord changed to ${userMention(newDiscordId)}`;
+    const cancelMessage = `${playerName}'s discord not changed`;
+
+    return [failures, prompts, confirmLabel, confirmMessage, cancelMessage];
+  }
+
+  async function onConfirm(data) {
+    const { newDiscordId, existingPlayer } = data;
+    await savePlayerChange(
+      existingPlayer.id,
+      existingPlayer.name,
+      newDiscordId,
       existingPlayer.stars,
       existingPlayer.teamId,
       existingPlayer.roleId,
@@ -294,6 +374,7 @@ async function ratePlayer(interaction) {
     await savePlayerChange(
       existingPlayer.id,
       existingPlayer.name,
+      existingPlayer.discord_snowflake,
       stars,
       existingPlayer.teamId,
       existingPlayer.roleId,
@@ -421,6 +502,7 @@ async function assignPlayer(interaction) {
     await savePlayerChange(
       existingPlayer.id,
       existingPlayer.name,
+      existingPlayer.discord_snowflake,
       existingPlayer.stars,
       newTeamId,
       newRoleId,
@@ -493,6 +575,7 @@ async function dropPlayer(interaction) {
     await savePlayerChange(
       existingPlayer.id,
       existingPlayer.name,
+      existingPlayer.discord_snowflake,
       existingPlayer.stars,
       null,
       null,
@@ -563,6 +646,7 @@ async function setPlayerInactive(interaction) {
     await savePlayerChange(
       existingPlayer.id,
       existingPlayer.name,
+      existingPlayer.discord_snowflake,
       existingPlayer.stars,
       null,
       null,
@@ -631,6 +715,7 @@ async function setPlayerActive(interaction) {
     await savePlayerChange(
       existingPlayer.id,
       existingPlayer.name,
+      existingPlayer.discord_snowflake,
       existingPlayer.stars,
       existingPlayer.team,
       existingPlayer.role,
