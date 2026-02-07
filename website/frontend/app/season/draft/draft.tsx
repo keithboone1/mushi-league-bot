@@ -24,32 +24,40 @@ export default function Draft({ loaderData }: Route.ComponentProps) {
                 <div
                   className={twJoin(
                     "font-bold p-1",
-                    teamColorText(team.team.color)
+                    teamColorText(team.team.color),
                   )}
                   style={{ backgroundColor: team.team.color }}
                 >
                   {teamInitials(team.team.name)}
                 </div>
                 <div className="text-sm p-1 flex gap-1 justify-between">
-                  <div className="whitespace-nowrap overflow-hidden text-ellipsis min-w-0">Total stars</div>
+                  <div className="whitespace-nowrap overflow-hidden text-ellipsis min-w-0">
+                    Total stars
+                  </div>
                   <div className="shrink-0 font-semibold">
                     {team.totalStars.toFixed(2)}
                   </div>
                 </div>
                 <div className="text-sm p-1 flex gap-1 justify-between">
-                  <div className="whitespace-nowrap overflow-hidden text-ellipsis min-w-0">Max stars next</div>
+                  <div className="whitespace-nowrap overflow-hidden text-ellipsis min-w-0">
+                    Max stars next
+                  </div>
                   <div className="shrink-0 font-semibold">
                     {team.maxStarsNext.toFixed(2)}
                   </div>
                 </div>
                 <div className="text-sm p-1 flex gap-1 justify-between">
-                  <div className="whitespace-nowrap overflow-hidden text-ellipsis min-w-0">Roster size</div>
+                  <div className="whitespace-nowrap overflow-hidden text-ellipsis min-w-0">
+                    Roster size
+                  </div>
                   <div className="shrink-0 font-semibold">
                     {team.totalPlayers}
                   </div>
                 </div>
                 <div className="text-sm p-1 flex gap-1 justify-between">
-                  <div className="whitespace-nowrap overflow-hidden text-ellipsis min-w-0">Min. picks left</div>
+                  <div className="whitespace-nowrap overflow-hidden text-ellipsis min-w-0">
+                    Min. picks left
+                  </div>
                   <div className="shrink-0 font-semibold">
                     {team.remainingPicksForMinRoster}
                   </div>
@@ -74,7 +82,7 @@ export default function Draft({ loaderData }: Route.ComponentProps) {
                       <div
                         className={twJoin(
                           "font-bold p-1",
-                          teamColorText(captain[i].team.color)
+                          teamColorText(captain[i].team.color),
                         )}
                         style={{ backgroundColor: captain[i].team.color }}
                       >
@@ -116,7 +124,7 @@ export default function Draft({ loaderData }: Route.ComponentProps) {
                       <div
                         className={twJoin(
                           "font-bold p-1",
-                          teamColorText(retain[i].team.color)
+                          teamColorText(retain[i].team.color),
                         )}
                         style={{ backgroundColor: retain[i].team.color }}
                       >
@@ -158,7 +166,7 @@ export default function Draft({ loaderData }: Route.ComponentProps) {
                       <div
                         className={twJoin(
                           "font-bold p-1",
-                          teamColorText(pick.team.color)
+                          teamColorText(pick.team.color),
                         )}
                         style={{ backgroundColor: pick.team.color }}
                       >
@@ -185,6 +193,29 @@ export default function Draft({ loaderData }: Route.ComponentProps) {
           ))}
         </tbody>
       </table>
+      <details className="mt-8" open>
+        <summary>
+          <h2 className="inline">Remaining Players</h2>
+        </summary>
+        <table className="border-collapse">
+          <thead className="border-b text-left">
+            <th className="w-12 border-r px-2">Stars</th>
+            <th className="px-2">Player</th>
+          </thead>
+          <tbody>
+            {loaderData.remainingPlayers.map((player) => (
+              <tr className="border-t">
+                <td className="border-r px-2">{(+player.stars).toFixed(2)}</td>
+                <td className="px-2">
+                  <NavLink to={`/players/${player.id}`} className="underline">
+                    {player.name}
+                  </NavLink>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </details>
     </>
   );
 }
@@ -225,11 +256,18 @@ type ParsedPlayer = {
   } | null;
 };
 
+type UndraftedPlayer = {
+  id: number;
+  name: string;
+  stars: string;
+};
+
 type Draft = {
   teamData: TeamData[];
   captains: ParsedPlayer[][];
   retains: ParsedPlayer[][];
   picks: ParsedPlayer[][];
+  remainingPlayers: UndraftedPlayer[];
 };
 
 type DraftQuery = {
@@ -242,16 +280,17 @@ type DraftQuery = {
     max_stars: number;
     r1_stars: number;
   };
+  remainingPlayers: UndraftedPlayer[];
 };
 
 export async function loader({ params: { season } }: Route.LoaderArgs) {
   const rawData = (await (
-    await fetch(`https://mushileague.gg/api/season/${season}/draft`)
+    await fetch(`http://localhost:3001/api/season/${season}/draft`)
   ).json()) as DraftQuery;
 
   const maxRoundLength = rawData.picks.reduce(
     (accum, item) => Math.max(accum, item.pick_order),
-    0
+    0,
   );
 
   const picks = rawData.picks.reduce((accum, item) => {
@@ -303,13 +342,11 @@ export async function loader({ params: { season } }: Route.LoaderArgs) {
       return accum;
     }, new Array(numberOfTeams) as Draft["captains"]);
 
-  const retains = rawData.retains
-    .sort((a, b) => pickOrder[a.teamId] - pickOrder[b.teamId])
-    .reduce((accum, item) => {
-      if (!accum[pickOrder[item.teamId]]) {
-        accum[pickOrder[item.teamId]] = [];
-      }
-      accum[pickOrder[item.teamId]].push({
+  const retains = rawData.retains.reduce((accum, item) => {
+    const position = pickOrder[item.teamId];
+    accum[position] = [
+      ...accum[position],
+      {
         team: {
           id: item.teamId,
           name: item.teamName,
@@ -320,9 +357,10 @@ export async function loader({ params: { season } }: Route.LoaderArgs) {
           name: item.playerName,
           stars: +item.stars.toFixed(2),
         },
-      });
-      return accum;
-    }, new Array(numberOfTeams) as Draft["retains"]);
+      },
+    ];
+    return accum;
+  }, new Array(numberOfTeams).fill([]) as Draft["retains"]);
 
   const teamData = picks[1].map(({ team }, i) => {
     const highestCaptainStars = captains[i][0].player?.stars ?? 0;
@@ -337,7 +375,7 @@ export async function loader({ params: { season } }: Route.LoaderArgs) {
                 totalStars: accum.totalStars + pick.stars,
               }
             : accum,
-        { totalPlayers: 0, totalStars: 0 }
+        { totalPlayers: 0, totalStars: 0 },
       );
 
     const round1PickUpcoming = picks[1][i] === undefined;
@@ -348,7 +386,10 @@ export async function loader({ params: { season } }: Route.LoaderArgs) {
         totalStars -
         (rawData.season.max_roster - totalPlayers - 1) * 1.5;
 
-    const remainingPicksForMinRoster = Math.max(rawData.season.min_roster - totalPlayers, 0);
+    const remainingPicksForMinRoster = Math.max(
+      rawData.season.min_roster - totalPlayers,
+      0,
+    );
 
     return {
       team,
@@ -359,5 +400,11 @@ export async function loader({ params: { season } }: Route.LoaderArgs) {
     };
   });
 
-  return { picks, captains, retains, teamData };
+  return {
+    picks,
+    captains,
+    retains,
+    teamData,
+    remainingPlayers: rawData.remainingPlayers,
+  };
 }

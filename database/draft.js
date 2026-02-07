@@ -14,7 +14,7 @@ export async function loadNextPickRoundForTeam(teamId, season) {
   return await db.get(
     "SELECT round FROM draft WHERE pick IS NULL AND skipped IS NULL AND team = ? AND season = ?",
     teamId,
-    season
+    season,
   );
 }
 
@@ -43,21 +43,26 @@ export async function loadDraft(season) {
      WHERE roster.season = ? AND roster.role = 1 AND roster.retained = 1 \
      ORDER BY pstat.stars DESC";
 
-  const seasonQuery = "SELECT min_roster, max_roster, max_stars, r1_stars FROM season WHERE number = ?"
+  const seasonQuery =
+    "SELECT min_roster, max_roster, max_stars, r1_stars FROM season WHERE number = ?";
+
+  const undraftedQuery =
+    "SELECT id, name, stars FROM player WHERE team IS NULL AND active = 1 ORDER BY stars DESC, LOWER(name) ASC";
 
   const picks = await db.all(picksQuery, season);
   const retains = await db.all(retainsQuery, season);
   const captains = await db.all(captainsQuery, season);
   const seasonData = await db.get(seasonQuery, season);
+  const remainingPlayers = await db.all(undraftedQuery);
 
-  return { season: seasonData, captains, retains, picks };
+  return { season: seasonData, captains, retains, picks, remainingPlayers };
 }
 
 export async function saveDraftSetup(
   season,
   maxRoster,
   limitedRoundOrder,
-  normalOrder
+  normalOrder,
 ) {
   let query = "INSERT INTO draft (season, round, pick_order, team) VALUES";
 
@@ -67,8 +72,8 @@ export async function saveDraftSetup(
         round === 1
           ? limitedRoundOrder[order - 1]
           : round % 2 === 0
-          ? normalOrder[order - 1]
-          : normalOrder[normalOrder.length - order];
+            ? normalOrder[order - 1]
+            : normalOrder[normalOrder.length - order];
 
       query += `\n(${season}, ${round}, ${order}, ${team})`;
 
@@ -88,6 +93,6 @@ export async function saveDraftPick(draftId, playerId) {
 export async function saveWithdrawTeam(teamId) {
   await db.run(
     "update draft SET skipped = 1 WHERE team = ? AND pick IS NULL",
-    teamId
+    teamId,
   );
 }
