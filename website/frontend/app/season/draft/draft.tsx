@@ -384,7 +384,7 @@ export async function loader({ params: { season } }: Route.LoaderArgs) {
       ? rawData.season.r1_stars - highestCaptainStars
       : rawData.season.max_stars -
         totalStars -
-        (rawData.season.max_roster - totalPlayers - 1) * 1.5;
+        (rawData.season.max_roster - totalPlayers - 1) * 2;
 
     const remainingPicksForMinRoster = Math.max(
       rawData.season.min_roster - totalPlayers,
