@@ -221,7 +221,7 @@ async function maxStarsNext(teamId, round) {
     return (
       currentSeason.max_stars -
       roster.stars -
-      (currentSeason.max_roster - 1 - roster.size) * 1.5
+      (currentSeason.max_roster - 1 - roster.size) * 2
     );
   }
 }
@@ -364,6 +364,7 @@ async function recordDraftPick(draftId, team, pick) {
   await savePlayerChange(
     pick.id,
     pick.name,
+    pick.discord_snowflake,
     pick.stars,
     team.teamId,
     1,
@@ -522,10 +523,10 @@ async function initDraft(interaction) {
     const draftCap =
       Math.ceil(
         (10 *
-          (seasonSize.starCount + 0.5 * teams.length - 1.5 * leftoverPlayers)) /
+          (seasonSize.starCount + 0.5 * teams.length - 2 * leftoverPlayers)) /
           teams.length,
       ) / 10;
-    const maxStars = draftCap + 1.5 * OVERFLOW_SIZE;
+    const maxStars = draftCap + 2 * OVERFLOW_SIZE;
 
     const minLineupBeforeOdding = Math.floor(minRoster * 0.7);
     const minLineup =
@@ -562,7 +563,7 @@ async function initDraft(interaction) {
     );
     prompts.push(
       `Season numbers: Min roster size ${minRoster};` +
-        ` draft cap ${draftCap} + 1.5 per player over min;` +
+        ` draft cap ${draftCap} + 2 per player over min;` +
         ` limited round stars ${r1stars};` +
         ` min lineup size ${minLineup}`,
     );
