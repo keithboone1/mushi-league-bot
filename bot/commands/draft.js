@@ -298,11 +298,11 @@ async function pickPlayer(interaction) {
       );
     }
 
-    // if (pick.teamId !== null) {
-    //   failures.push(
-    //     `${userMention(pick.discord_snowflake)} is already on a team!`,
-    //   );
-    // }
+    if (pick.teamId !== null) {
+      failures.push(
+        `${userMention(pick.discord_snowflake)} is already on a team!`,
+      );
+    }
 
     if (!pick.active) {
       failures.push(
@@ -646,7 +646,7 @@ async function startDraft(interaction) {
   }
 
   async function onConfirm(data) {
-    // await sendDraftPing(data.firstPickTeam.discord_snowflake, data.maxStars);
+    await sendDraftPing(data.firstPickTeam.discord_snowflake, data.maxStars);
   }
 
   await baseHandler(
