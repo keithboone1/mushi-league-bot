@@ -2,6 +2,7 @@ import { twJoin, twMerge } from "tailwind-merge";
 import type { Route } from "./+types/team";
 import { NavLink } from "react-router";
 import { useEffect, useState } from "react";
+import { getApiHost } from "~/utils";
 
 export default function Team({ loaderData }: Route.ComponentProps) {
   const leadershipTeam = loaderData.players.filter((p) => p.role !== "Player");
@@ -105,8 +106,9 @@ type TeamQuery = {
   }[];
 };
 
-export async function loader({ params: { season, teamId } }: Route.LoaderArgs) {
+export async function loader({ params: { season, teamId }, request }: Route.LoaderArgs) {
+  const url = new URL(request.url);
   return (await (
-    await fetch(`https://mushileague.gg/api/season/${season}/team/${teamId}`)
+    await fetch(`${getApiHost(url)}/api/season/${season}/team/${teamId}`)
   ).json()) as TeamQuery;
 }
