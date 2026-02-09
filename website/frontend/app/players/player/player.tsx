@@ -65,10 +65,9 @@ export default function Season({
       <h1 className="mb-1">{loaderData[0].playerName}</h1>
       {loaderData.map((season, i) => (
         <div className="my-6">
-          {i === 0 ||
-            (loaderData[i - 1].season !== season.season && (
-              <h2 id={season.season.toString()}>{`Season ${season.season}`}</h2>
-            ))}
+          {(i === 0 || loaderData[i - 1].season !== season.season) && (
+            <h2 id={season.season.toString()}>{`Season ${season.season}`}</h2>
+          )}
           <div className="font-medium">
             {season.roleName} on{" "}
             <span

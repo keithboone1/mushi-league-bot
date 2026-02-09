@@ -26,6 +26,7 @@ export async function saveNewPlayer(snowflake, name, stars) {
 export async function savePlayerChange(
   id,
   name,
+  discord_snowflake,
   stars,
   team,
   role,
@@ -33,7 +34,7 @@ export async function savePlayerChange(
   season,
   currentWeek,
 ) {
-  let updatePlayerQuery = `UPDATE player SET name = '${name}', stars = ${stars}, team = ${
+  let updatePlayerQuery = `UPDATE player SET name = '${name}', discord_snowflake = '${discord_snowflake}', stars = ${stars}, team = ${
     team ?? null
   }, role = ${role ?? null}, active = ${active} WHERE id = ${id};`;
 
