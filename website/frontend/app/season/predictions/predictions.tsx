@@ -19,7 +19,7 @@ export default function Players({ loaderData }: Route.ComponentProps) {
             <tr key={player.name}>
               <td className="px-2 text-center">{i + 1}</td>
               <td className="px-2 font-semibold">
-                {getPlayerName(player.name, player.discord_snowflake)}
+                {getPlayerName(player.name, player.predictor_snowflake)}
               </td>
               <td className="px-2 text-center">{player.correctPredictions}</td>
               <td className="px-2 text-center">{player.totalPredictions}</td>
@@ -46,7 +46,7 @@ const getPlayerName = (name: string | null, snowflake: string) =>
 
 type PredictionsQuery = {
   name: string | null;
-  discord_snowflake: string;
+  predictor_snowflake: string;
   correctPredictions: number;
   totalPredictions: number;
 }[];
