@@ -28,7 +28,7 @@ export async function loadWeeklyTopTenInPredictions(season, week) {
 
 export async function loadPredictionsStandings(season) {
   const standingsQuery =
-    "SELECT player.name, SUM(IIF(pairing.winner = prediction.predicted_winner, 1, 0)) AS correctPredictions, COUNT(prediction.predictor_snowflake) AS totalPredictions FROM prediction \
+    "SELECT player.name, prediction.predictor_snowflake, SUM(IIF(pairing.winner = prediction.predicted_winner, 1, 0)) AS correctPredictions, COUNT(prediction.predictor_snowflake) AS totalPredictions FROM prediction \
      INNER JOIN pairing ON prediction.pairing = pairing.id \
      INNER JOIN matchup ON pairing.matchup = matchup.id \
      INNER JOIN week ON matchup.week = week.id \

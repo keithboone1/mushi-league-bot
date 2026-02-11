@@ -18,7 +18,9 @@ export default function Players({ loaderData }: Route.ComponentProps) {
           {loaderData.map((player, i) => (
             <tr key={player.name}>
               <td className="px-2 text-center">{i + 1}</td>
-              <td className="px-2 font-semibold">{player.name}</td>
+              <td className="px-2 font-semibold">
+                {getPlayerName(player.name, player.discord_snowflake)}
+              </td>
               <td className="px-2 text-center">{player.correctPredictions}</td>
               <td className="px-2 text-center">{player.totalPredictions}</td>
               <td className="px-2 text-center">
@@ -35,8 +37,16 @@ export default function Players({ loaderData }: Route.ComponentProps) {
   );
 }
 
+const getPlayerName = (name: string | null, snowflake: string) =>
+  name ??
+  snowflake
+    .split("_")
+    .map((word) => `${word.charAt(0).toUpperCase()}${word.substring(1)}`)
+    .join(" ");
+
 type PredictionsQuery = {
   name: string | null;
+  discord_snowflake: string;
   correctPredictions: number;
   totalPredictions: number;
 }[];
