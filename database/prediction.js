@@ -44,13 +44,13 @@ export async function savePredictionsToDatabase(
   pairingId,
   predictions,
   leftPlayer,
-  rightPlayer
+  rightPlayer,
 ) {
   const leftPlayerPredictions = predictions[leftPlayer]
-    .map((reacter) => `(${pairingId}, ${reacter}, ${leftPlayer})`)
+    .map((reacter) => `(${pairingId}, '${reacter}', ${leftPlayer})`)
     .join(",\n");
   const rightPlayerPredictions = predictions[rightPlayer]
-    .map((reacter) => `(${pairingId}, ${reacter}, ${rightPlayer})`)
+    .map((reacter) => `(${pairingId}, '${reacter}', ${rightPlayer})`)
     .join(",\n");
   const separator =
     leftPlayerPredictions && rightPlayerPredictions ? ",\n" : "";
@@ -59,7 +59,7 @@ export async function savePredictionsToDatabase(
     "INSERT INTO prediction (pairing, predictor_snowflake, predicted_winner) VALUES\n".concat(
       leftPlayerPredictions,
       separator,
-      rightPlayerPredictions
+      rightPlayerPredictions,
     );
 
   await db.run(insertQuery);

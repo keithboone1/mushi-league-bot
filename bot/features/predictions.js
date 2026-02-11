@@ -109,7 +109,7 @@ export async function savePredictions(
     predictionsMessage.reactions.cache,
   );
 
-  addAutomatedPredictions(pairingId, predictions, leftPlayer, rightPlayer);
+  await addAutomatedPredictions(pairingId, predictions, leftPlayer, rightPlayer);
 
   await savePredictionsToDatabase(
     pairingId,
