@@ -6,7 +6,7 @@ export async function loadCumulativeTopTenInPredictions(season, week) {
      INNER JOIN pairing ON pairing = pairing.id \
      INNER JOIN matchup ON pairing.matchup = matchup.id \
      INNER JOIN week ON matchup.week = week.id \
-     WHERE pairing.winner IS NOT NULL AND pairing.winner = predicted_winner AND pairing.game1 IS NOT NULL AND week.season = ? AND week.number <= ? \
+     WHERE pairing.winner IS NOT NULL AND pairing.winner = predicted_winner AND pairing.game1 IS NOT NULL AND week.season = ? AND week.number <= ? AND predictor_snowflake GLOB '[0-9]*' \
      GROUP BY predictor_snowflake \
      ORDER BY correctPredictions DESC LIMIT 10";
 
@@ -19,7 +19,7 @@ export async function loadWeeklyTopTenInPredictions(season, week) {
      INNER JOIN pairing ON pairing = pairing.id \
      INNER JOIN matchup ON pairing.matchup = matchup.id \
      INNER JOIN week ON matchup.week = week.id \
-     WHERE pairing.winner IS NOT NULL AND pairing.winner = predicted_winner AND pairing.game1 IS NOT NULL AND week.season = ? AND week.number = ? \
+     WHERE pairing.winner IS NOT NULL AND pairing.winner = predicted_winner AND pairing.game1 IS NOT NULL AND week.season = ? AND week.number = ? AND predictor_snowflake GLOB '[0-9]*' \
      GROUP BY predictor_snowflake \
      ORDER BY correctPredictions DESC LIMIT 10";
 
