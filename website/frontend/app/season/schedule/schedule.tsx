@@ -3,6 +3,7 @@ import type { Route } from "./+types/schedule";
 import { teamColorText, weekName } from "util/util";
 import { format } from "date-fns";
 import { NavLink } from "react-router";
+import { getApiHost } from "~/utils";
 
 export default function Schedule({ params, loaderData }: Route.ComponentProps) {
   const padToLength3 = (games: string[]): string[] =>
@@ -260,9 +261,10 @@ type ScheduleData = {
   }[];
 };
 
-export async function loader({ params: { season } }: Route.LoaderArgs) {
+export async function loader({ params: { season }, request }: Route.LoaderArgs) {
+  const url = new URL(request.url);
   const rawData = (await (
-    await fetch(`https://mushileague.gg/api/season/${season}/schedule`)
+    await fetch(`${getApiHost(url)}/api/season/${season}/schedule`)
   ).json()) as ScheduleQuery;
 
   const regularWeeks = rawData.schedule[0].regular_weeks;
