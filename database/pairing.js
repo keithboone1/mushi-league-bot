@@ -1,6 +1,16 @@
 import { db } from "./database.js";
 import { loadMatchupsMissingLineups } from "./matchup.js";
 
+export async function loadPairingStats(pairingId) {
+  const query =
+    "select left_pstat.stars as leftStars, left_pstat.star_points as leftStarPoints, right_pstat.stars as rightStars, right_pstat.star_points as rightStarPoints from pairing\
+     inner join pstat as left_pstat on left_player = left_pstat.player\
+     inner join pstat as right_pstat on right_player = right_pstat.player\
+     where pairing.id = ?";
+
+  return await db.get(query, pairingId);
+}
+
 export async function loadAllPairings(season, week) {
   const query =
     "SELECT leftPlayer.discord_snowflake AS leftPlayerSnowflake, leftPlayer.name AS leftPlayerName, leftTeam.name AS leftTeamName, leftTeam.discord_snowflake AS leftTeamSnowflake, leftTeam.emoji AS leftEmoji, \
@@ -57,7 +67,15 @@ export async function loadOnePairing(season, week, playerSnowflake) {
          WHERE (rightPlayer.discord_snowflake = ? OR leftPlayer.discord_snowflake = ?) \
              AND week.number = ? AND week.season = ?";
 
-  return await db.get(query, season, season, playerSnowflake, playerSnowflake, week, season);
+  return await db.get(
+    query,
+    season,
+    season,
+    playerSnowflake,
+    playerSnowflake,
+    week,
+    season,
+  );
 }
 
 export async function loadOnePairingFromId(season, week, playerId) {

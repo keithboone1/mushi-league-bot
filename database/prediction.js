@@ -6,7 +6,7 @@ export async function loadCumulativeTopTenInPredictions(season, week) {
      INNER JOIN pairing ON pairing = pairing.id \
      INNER JOIN matchup ON pairing.matchup = matchup.id \
      INNER JOIN week ON matchup.week = week.id \
-     WHERE pairing.winner IS NOT NULL AND pairing.winner = predicted_winner AND pairing.game1 IS NOT NULL AND week.season = ? AND week.number <= ? \
+     WHERE pairing.winner IS NOT NULL AND pairing.winner = predicted_winner AND pairing.game1 IS NOT NULL AND week.season = ? AND week.number <= ? AND predictor_snowflake GLOB '[0-9]*' \
      GROUP BY predictor_snowflake \
      ORDER BY correctPredictions DESC LIMIT 10";
 
@@ -19,7 +19,7 @@ export async function loadWeeklyTopTenInPredictions(season, week) {
      INNER JOIN pairing ON pairing = pairing.id \
      INNER JOIN matchup ON pairing.matchup = matchup.id \
      INNER JOIN week ON matchup.week = week.id \
-     WHERE pairing.winner IS NOT NULL AND pairing.winner = predicted_winner AND pairing.game1 IS NOT NULL AND week.season = ? AND week.number = ? \
+     WHERE pairing.winner IS NOT NULL AND pairing.winner = predicted_winner AND pairing.game1 IS NOT NULL AND week.season = ? AND week.number = ? AND predictor_snowflake GLOB '[0-9]*' \
      GROUP BY predictor_snowflake \
      ORDER BY correctPredictions DESC LIMIT 10";
 
@@ -28,7 +28,7 @@ export async function loadWeeklyTopTenInPredictions(season, week) {
 
 export async function loadPredictionsStandings(season) {
   const standingsQuery =
-    "SELECT player.name, SUM(IIF(pairing.winner = prediction.predicted_winner, 1, 0)) AS correctPredictions, COUNT(prediction.predictor_snowflake) AS totalPredictions FROM prediction \
+    "SELECT player.name, prediction.predictor_snowflake, SUM(IIF(pairing.winner = prediction.predicted_winner, 1, 0)) AS correctPredictions, COUNT(prediction.predictor_snowflake) AS totalPredictions FROM prediction \
      INNER JOIN pairing ON prediction.pairing = pairing.id \
      INNER JOIN matchup ON pairing.matchup = matchup.id \
      INNER JOIN week ON matchup.week = week.id \
@@ -44,13 +44,13 @@ export async function savePredictionsToDatabase(
   pairingId,
   predictions,
   leftPlayer,
-  rightPlayer
+  rightPlayer,
 ) {
   const leftPlayerPredictions = predictions[leftPlayer]
-    .map((reacter) => `(${pairingId}, ${reacter}, ${leftPlayer})`)
+    .map((reacter) => `(${pairingId}, '${reacter}', ${leftPlayer})`)
     .join(",\n");
   const rightPlayerPredictions = predictions[rightPlayer]
-    .map((reacter) => `(${pairingId}, ${reacter}, ${rightPlayer})`)
+    .map((reacter) => `(${pairingId}, '${reacter}', ${rightPlayer})`)
     .join(",\n");
   const separator =
     leftPlayerPredictions && rightPlayerPredictions ? ",\n" : "";
@@ -59,7 +59,7 @@ export async function savePredictionsToDatabase(
     "INSERT INTO prediction (pairing, predictor_snowflake, predicted_winner) VALUES\n".concat(
       leftPlayerPredictions,
       separator,
-      rightPlayerPredictions
+      rightPlayerPredictions,
     );
 
   await db.run(insertQuery);
