@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 import type { Route } from "./+types/welcome";
+import { getApiHost } from "~/utils";
 
 type Season = {
   number: number;
@@ -64,9 +65,10 @@ export default function Welcome({ loaderData }: Route.ComponentProps) {
   );
 }
 
-export async function loader() {
-  const rawData = (await (
-    await fetch("https://mushileague.gg/api/seasons")
+export async function loader({ request }: Route.LoaderArgs) {
+    const url = new URL(request.url);
+    const rawData = (await (
+    await fetch(`${getApiHost(url)}/api/seasons`)
   ).json()) as SeasonsQuery;
 
   const lastNumber = rawData.seasons[0].number;

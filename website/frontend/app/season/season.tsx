@@ -3,6 +3,7 @@ import { twMerge } from "tailwind-merge";
 import { ArrowLeft } from "lucide-react";
 import type { Route } from "./+types/season";
 import { teamInitials } from "util/util";
+import { getApiHost } from "~/utils";
 
 type TeamQuery = {
   id: number;
@@ -103,8 +104,9 @@ export default function Season({
   );
 }
 
-export async function loader({ params: { season } }: Route.LoaderArgs) {
+export async function loader({ params: { season }, request }: Route.LoaderArgs) {
+  const url = new URL(request.url);
   return (await (
-    await fetch(`https://mushileague.gg/api/season/${season}`)
+    await fetch(`${getApiHost(url)}/api/season/${season}`)
   ).json()) as TeamQuery;
 }

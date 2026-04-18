@@ -1,6 +1,7 @@
 import { twJoin } from "tailwind-merge";
 import type { Route } from "./+types/standings";
 import { teamColorText } from "util/util";
+import { getApiHost } from "~/utils";
 
 export default function Standings({ loaderData }: Route.ComponentProps) {
   return (
@@ -51,8 +52,9 @@ type StandingsQuery = {
   points: number;
 }[];
 
-export async function loader({ params: { season } }: Route.LoaderArgs) {
+export async function loader({ params: { season }, request }: Route.LoaderArgs) {
+  const url = new URL(request.url);
   return (await (
-    await fetch(`https://mushileague.gg/api/season/${season}/standings`)
+    await fetch(`${getApiHost(url)}/api/season/${season}/standings`)
   ).json()) as StandingsQuery;
 }

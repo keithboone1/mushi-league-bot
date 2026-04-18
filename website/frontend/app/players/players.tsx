@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { NavLink } from "react-router";
 import type { Route } from "./+types/players";
 import { ArrowLeft } from "lucide-react";
+import { getApiHost } from "~/utils";
 
 type SortOrder = "asc" | "desc";
 
@@ -117,8 +118,9 @@ type PlayersQuery = {
   ties: number;
 }[];
 
-export async function loader() {
-  return (await (
-    await fetch(`https://mushileague.gg/api/players`)
+export async function loader({ request }: Route.LoaderArgs) {
+    const url = new URL(request.url);
+    return (await (
+    await fetch(`${getApiHost(url)}/api/players`)
   ).json()) as PlayersQuery;
 }
